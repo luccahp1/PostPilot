@@ -29,17 +29,17 @@ export const BRAND_VIBES = [
   { value: 'luxury', label: 'Luxury', emoji: '✨' },
   { value: 'playful', label: 'Playful', emoji: '🎉' },
   { value: 'minimalist', label: 'Minimalist', emoji: '⚡' },
-  { value: 'bold', label: 'Bold', emoji: '🔥' },
+  { value: 'student-encouraged', label: 'Student Encouraged', emoji: '📚' },
   { value: 'professional', label: 'Professional', emoji: '💼' },
 ]
 
 export const PRIMARY_GOALS = [
-  'Increase Bookings',
-  'Drive Foot Traffic',
-  'Get More Calls',
-  'Boost Online Orders',
-  'Grow Followers',
-  'Build Brand Awareness',
+  { value: 'bookings', label: 'Increase Bookings', emoji: '📅' },
+  { value: 'foot-traffic', label: 'Drive Foot Traffic', emoji: '🚶' },
+  { value: 'calls', label: 'Get More Calls', emoji: '📞' },
+  { value: 'online-orders', label: 'Boost Online Orders', emoji: '🛒' },
+  { value: 'followers', label: 'Grow Followers', emoji: '📈' },
+  { value: 'brand-awareness', label: 'Build Brand Awareness', emoji: '🎯' },
 ]
 
 export const POSTING_FREQUENCIES = [

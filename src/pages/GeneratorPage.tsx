@@ -1,22 +1,110 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ArrowLeft, Sparkles, Loader2 } from 'lucide-react'
+import { ArrowLeft, Sparkles, Loader2, Upload, Plus, X, Pencil, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { api } from '@/lib/api'
+import { api, MenuItem } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import { FunctionsHttpError } from '@supabase/supabase-js'
 
 export default function GeneratorPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [loading, setLoading] = useState(false)
+  const [uploadingMenu, setUploadingMenu] = useState(false)
+  const [showMenuEditor, setShowMenuEditor] = useState(false)
+  const [menuImage, setMenuImage] = useState<File | null>(null)
+  const [primaryOffer, setPrimaryOffer] = useState('')
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([])
+  const [newItem, setNewItem] = useState({ name: '', description: '', price: '', category: '' })
 
   const { data: profile } = useQuery({
     queryKey: ['business-profile'],
     queryFn: api.getBusinessProfile,
   })
+
+  // Initialize menu items from profile
+  useState(() => {
+    if (profile?.menu_items) {
+      setMenuItems(profile.menu_items)
+    }
+  })
+
+  const handleAddItem = () => {
+    if (!newItem.name.trim()) {
+      toast.error('Please enter an item name')
+      return
+    }
+
+    const item: MenuItem = {
+      id: Date.now().toString(),
+      name: newItem.name,
+      description: newItem.description,
+      price: newItem.price,
+      category: newItem.category,
+    }
+
+    setMenuItems([...menuItems, item])
+    setNewItem({ name: '', description: '', price: '', category: '' })
+  }
+
+  const handleRemoveItem = (id: string) => {
+    setMenuItems(menuItems.filter(item => item.id !== id))
+  }
+
+  const handleMenuImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file')
+      return
+    }
+
+    setMenuImage(file)
+    setUploadingMenu(true)
+
+    try {
+      // TODO: Implement AI menu scanning with OnSpace AI vision model
+      // For now, we'll show a placeholder flow
+      toast.info('Analyzing menu...')
+      
+      // Simulated delay for AI processing
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      // Mock parsed menu items
+      const parsedItems: MenuItem[] = [
+        { id: Date.now().toString(), name: 'Example Item 1', description: '', price: '$12.99', category: 'Main' },
+        { id: (Date.now() + 1).toString(), name: 'Example Item 2', description: '', price: '$8.99', category: 'Sides' },
+      ]
+      
+      setMenuItems([...menuItems, ...parsedItems])
+      setShowMenuEditor(true)
+      toast.success('Menu scanned! Please verify the items below')
+    } catch (error: any) {
+      toast.error('Failed to scan menu')
+    } finally {
+      setUploadingMenu(false)
+    }
+  }
+
+  const handleSaveMenu = async () => {
+    if (!profile) return
+
+    try {
+      await api.updateBusinessProfile(profile.id, { menu_items: menuItems })
+      queryClient.invalidateQueries({ queryKey: ['business-profile'] })
+      toast.success('Menu saved successfully!')
+      setShowMenuEditor(false)
+    } catch (error: any) {
+      toast.error(error.message)
+    }
+  }
 
   const handleGenerate = async () => {
     if (!profile) {
@@ -35,8 +123,10 @@ export default function GeneratorPage() {
           businessName: profile.business_name,
           businessType: profile.business_type,
           city: profile.city,
-          neighborhood: profile.neighborhood,
-          primaryOffer: profile.primary_offer,
+          province: profile.province,
+          instagramHandle: profile.instagram_handle,
+          websiteUrl: profile.website_url,
+          primaryOffer,
           brandVibe: profile.brand_vibe,
           postingFrequency: profile.posting_frequency,
           primaryGoal: profile.primary_goal,
@@ -44,6 +134,7 @@ export default function GeneratorPage() {
           businessDescription: profile.business_description,
           productsServices: profile.products_services,
           permanentContext: profile.permanent_context,
+          menuItems: profile.menu_items,
         }
       })
 
@@ -117,47 +208,181 @@ export default function GeneratorPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <div className="space-y-6 mb-8">
+            {/* Primary Offer This Month */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Your Business</CardTitle>
+                <CardTitle>Primary Offers This Month</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div>
-                  <span className="font-medium">Type:</span> {profile.business_type}
+              <CardContent>
+                <div className="space-y-2">
+                  <Label htmlFor="primaryOffer">Current Promotion or Special Offer</Label>
+                  <Textarea
+                    id="primaryOffer"
+                    placeholder="New spring menu, 20% off all services, Buy one get one free, Limited time offer, etc."
+                    value={primaryOffer}
+                    onChange={(e) => setPrimaryOffer(e.target.value)}
+                    rows={3}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    What special promotions or offers should we highlight in this month's content?
+                  </p>
                 </div>
-                {profile.city && (
-                  <div>
-                    <span className="font-medium">Location:</span> {profile.city}
-                    {profile.neighborhood && `, ${profile.neighborhood}`}
+              </CardContent>
+            </Card>
+
+            {/* Menu/Services Manager */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Menu / Services</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Manage your complete offerings for AI-powered content
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowMenuEditor(!showMenuEditor)}
+                >
+                  <Pencil className="mr-2 h-4 w-4" />
+                  {showMenuEditor ? 'Close Editor' : 'Edit Details'}
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Menu Items Display */}
+                {menuItems.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-sm font-medium mb-2">Current Items ({menuItems.length})</p>
+                    <div className="grid gap-2 max-h-48 overflow-y-auto">
+                      {menuItems.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <div>
+                            <p className="font-medium">{item.name}</p>
+                            {item.description && <p className="text-sm text-muted-foreground">{item.description}</p>}
+                            <div className="flex gap-3 text-xs text-muted-foreground mt-1">
+                              {item.price && <span>💰 {item.price}</span>}
+                              {item.category && <span>📁 {item.category}</span>}
+                            </div>
+                          </div>
+                          {showMenuEditor && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveItem(item.id)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
-                {profile.primary_offer && (
-                  <div>
-                    <span className="font-medium">Current Offer:</span> {profile.primary_offer}
-                  </div>
+
+                {showMenuEditor && (
+                  <>
+                    {/* Add Item Manually */}
+                    <div className="space-y-3 p-4 border-2 border-dashed rounded-lg">
+                      <p className="font-medium">Add Item Manually</p>
+                      <div className="grid md:grid-cols-2 gap-3">
+                        <Input
+                          placeholder="Item name *"
+                          value={newItem.name}
+                          onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                        />
+                        <Input
+                          placeholder="Price (optional)"
+                          value={newItem.price}
+                          onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
+                        />
+                        <Input
+                          placeholder="Category (optional)"
+                          value={newItem.category}
+                          onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
+                        />
+                        <Input
+                          placeholder="Description (optional)"
+                          value={newItem.description}
+                          onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
+                        />
+                      </div>
+                      <Button onClick={handleAddItem} size="sm">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Item
+                      </Button>
+                    </div>
+
+                    {/* Upload Menu Image */}
+                    <div className="space-y-3 p-4 border-2 border-dashed rounded-lg">
+                      <p className="font-medium">Or Scan Menu Image</p>
+                      <p className="text-sm text-muted-foreground">
+                        Upload a clear photo of your menu and AI will extract items and prices
+                      </p>
+                      <div className="flex gap-3">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleMenuImageUpload}
+                          disabled={uploadingMenu}
+                        />
+                        {uploadingMenu && <Loader2 className="h-5 w-5 animate-spin" />}
+                      </div>
+                    </div>
+
+                    {/* Save Button */}
+                    <Button onClick={handleSaveMenu} className="w-full">
+                      <Check className="mr-2 h-4 w-4" />
+                      Save Menu Updates
+                    </Button>
+                  </>
                 )}
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Content Strategy</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div>
-                  <span className="font-medium">Brand Vibe:</span> {profile.brand_vibe.join(', ')}
-                </div>
-                <div>
-                  <span className="font-medium">Posting:</span>{' '}
-                  {profile.posting_frequency === 'daily' ? 'Daily (7x/week)' :
-                   profile.posting_frequency === '5x-week' ? '5x per week' : '3x per week'}
-                </div>
-                <div>
-                  <span className="font-medium">Goal:</span> {profile.primary_goal}
-                </div>
-              </CardContent>
-            </Card>
+            {/* Business Summary */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Your Business</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div>
+                    <span className="font-medium">Type:</span> {profile.business_type}
+                  </div>
+                  {profile.city && (
+                    <div>
+                      <span className="font-medium">Location:</span> {profile.city}
+                      {profile.province && `, ${profile.province}`}
+                    </div>
+                  )}
+                  {profile.instagram_handle && (
+                    <div>
+                      <span className="font-medium">Instagram:</span> {profile.instagram_handle}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Content Strategy</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div>
+                    <span className="font-medium">Brand Vibe:</span> {profile.brand_vibe.join(', ')}
+                  </div>
+                  <div>
+                    <span className="font-medium">Posting:</span>{' '}
+                    {profile.posting_frequency === 'daily' ? 'Daily (7x/week)' :
+                     profile.posting_frequency === '5x-week' ? '5x per week' : '3x per week'}
+                  </div>
+                  <div>
+                    <span className="font-medium">Goals:</span> {Array.isArray(profile.primary_goal) ? profile.primary_goal.join(', ') : profile.primary_goal}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           <Card className="bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20">

@@ -27,11 +27,12 @@ export default function SettingsPage() {
     businessName: profile?.business_name || '',
     businessType: profile?.business_type || '',
     city: profile?.city || '',
-    neighborhood: profile?.neighborhood || '',
-    primaryOffer: profile?.primary_offer || '',
+    province: profile?.province || '',
+    instagramHandle: profile?.instagram_handle || '',
+    websiteUrl: profile?.website_url || '',
     brandVibe: profile?.brand_vibe || [],
     postingFrequency: profile?.posting_frequency || 'daily',
-    primaryGoal: profile?.primary_goal || '',
+    primaryGoal: profile?.primary_goal || [],
     businessDescription: profile?.business_description || '',
     productsServices: profile?.products_services || '',
     permanentContext: profile?.permanent_context || '',
@@ -44,11 +45,12 @@ export default function SettingsPage() {
         businessName: profile.business_name,
         businessType: profile.business_type,
         city: profile.city || '',
-        neighborhood: profile.neighborhood || '',
-        primaryOffer: profile.primary_offer || '',
+        province: profile.province || '',
+        instagramHandle: profile.instagram_handle || '',
+        websiteUrl: profile.website_url || '',
         brandVibe: profile.brand_vibe,
         postingFrequency: profile.posting_frequency,
-        primaryGoal: profile.primary_goal,
+        primaryGoal: Array.isArray(profile.primary_goal) ? profile.primary_goal : [],
         businessDescription: profile.business_description || '',
         productsServices: profile.products_services || '',
         permanentContext: profile.permanent_context || '',
@@ -64,12 +66,31 @@ export default function SettingsPage() {
       return
     }
 
+    if (formData.primaryGoal.length === 0) {
+      toast.error('Please select at least one primary goal')
+      return
+    }
+
     if (!profile) return
 
     setLoading(true)
 
     try {
-      await api.updateBusinessProfile(profile.id, formData)
+      const profileData = {
+        business_name: formData.businessName,
+        business_type: formData.businessType,
+        city: formData.city,
+        province: formData.province,
+        instagram_handle: formData.instagramHandle,
+        website_url: formData.websiteUrl,
+        brand_vibe: formData.brandVibe,
+        posting_frequency: formData.postingFrequency,
+        primary_goal: formData.primaryGoal,
+        business_description: formData.businessDescription,
+        products_services: formData.productsServices,
+        permanent_context: formData.permanentContext,
+      }
+      await api.updateBusinessProfile(profile.id, profileData)
       queryClient.invalidateQueries({ queryKey: ['business-profile'] })
       toast.success('Settings saved successfully!')
     } catch (error: any) {
@@ -77,6 +98,15 @@ export default function SettingsPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const togglePrimaryGoal = (goal: string) => {
+    setFormData(prev => ({
+      ...prev,
+      primaryGoal: prev.primaryGoal.includes(goal)
+        ? prev.primaryGoal.filter(g => g !== goal)
+        : [...prev.primaryGoal, goal]
+    }))
   }
 
   const toggleBrandVibe = (vibe: string) => {
@@ -161,12 +191,32 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="neighborhood">Neighborhood</Label>
+                    <Label htmlFor="province">Province/State</Label>
                     <Input
-                      id="neighborhood"
-                      placeholder="Mission District"
-                      value={formData.neighborhood}
-                      onChange={(e) => setFormData(prev => ({ ...prev, neighborhood: e.target.value }))}
+                      id="province"
+                      placeholder="California"
+                      value={formData.province}
+                      onChange={(e) => setFormData(prev => ({ ...prev, province: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="instagramHandle">Instagram Handle</Label>
+                    <Input
+                      id="instagramHandle"
+                      placeholder="@yourbusiness"
+                      value={formData.instagramHandle}
+                      onChange={(e) => setFormData(prev => ({ ...prev, instagramHandle: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="websiteUrl">Website URL</Label>
+                    <Input
+                      id="websiteUrl"
+                      placeholder="https://yourbusiness.com"
+                      value={formData.websiteUrl}
+                      onChange={(e) => setFormData(prev => ({ ...prev, websiteUrl: e.target.value }))}
                     />
                   </div>
                 </div>
@@ -197,15 +247,7 @@ export default function SettingsPage() {
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="primaryOffer">Current Promotion/Offer</Label>
-                  <Input
-                    id="primaryOffer"
-                    placeholder="New spring menu, 20% off, Free consultation, etc."
-                    value={formData.primaryOffer}
-                    onChange={(e) => setFormData(prev => ({ ...prev, primaryOffer: e.target.value }))}
-                  />
-                </div>
+
               </CardContent>
             </Card>
 
@@ -241,41 +283,46 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="postingFrequency">Posting Frequency</Label>
-                    <Select
-                      value={formData.postingFrequency}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, postingFrequency: value }))}
-                      required
-                    >
-                      <SelectTrigger id="postingFrequency">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {POSTING_FREQUENCIES.map((freq) => (
-                          <SelectItem key={freq.value} value={freq.value}>{freq.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="postingFrequency">Posting Frequency</Label>
+                  <Select
+                    value={formData.postingFrequency}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, postingFrequency: value }))}
+                    required
+                  >
+                    <SelectTrigger id="postingFrequency">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {POSTING_FREQUENCIES.map((freq) => (
+                        <SelectItem key={freq.value} value={freq.value}>{freq.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="primaryGoal">Primary Goal</Label>
-                    <Select
-                      value={formData.primaryGoal}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, primaryGoal: value }))}
-                      required
-                    >
-                      <SelectTrigger id="primaryGoal">
-                        <SelectValue placeholder="Select goal" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PRIMARY_GOALS.map((goal) => (
-                          <SelectItem key={goal} value={goal}>{goal}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                <div className="space-y-2">
+                  <Label>Primary Goals (Select all that apply)</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {PRIMARY_GOALS.map((goal) => (
+                      <label
+                        key={goal.value}
+                        className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                          formData.primaryGoal.includes(goal.value)
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <Checkbox
+                          checked={formData.primaryGoal.includes(goal.value)}
+                          onCheckedChange={() => togglePrimaryGoal(goal.value)}
+                        />
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">{goal.emoji}</span>
+                          <span className="font-medium text-sm">{goal.label}</span>
+                        </div>
+                      </label>
+                    ))}
                   </div>
                 </div>
               </CardContent>

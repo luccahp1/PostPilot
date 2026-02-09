@@ -6,19 +6,29 @@ export interface BusinessProfile {
   business_name: string
   business_type: string
   city: string | null
-  neighborhood: string | null
-  primary_offer: string | null
+  province: string | null
+  instagram_handle: string | null
+  website_url: string | null
   brand_vibe: string[]
   posting_frequency: string
-  primary_goal: string
+  primary_goal: string[]
   subscription_status: string
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
   business_description: string | null
   products_services: string | null
   permanent_context: string | null
+  menu_items: MenuItem[]
   created_at: string
   updated_at: string
+}
+
+export interface MenuItem {
+  id: string
+  name: string
+  description?: string
+  price?: string
+  category?: string
 }
 
 export interface Calendar {

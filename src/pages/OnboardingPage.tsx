@@ -19,11 +19,12 @@ export default function OnboardingPage() {
     businessName: '',
     businessType: '',
     city: '',
-    neighborhood: '',
-    primaryOffer: '',
+    province: '',
+    instagramHandle: '',
+    websiteUrl: '',
     brandVibe: [] as string[],
     postingFrequency: 'daily',
-    primaryGoal: '',
+    primaryGoal: [] as string[],
   })
 
   const { data: profile } = useQuery({
@@ -39,13 +40,30 @@ export default function OnboardingPage() {
       return
     }
 
+    if (formData.primaryGoal.length === 0) {
+      toast.error('Please select at least one primary goal')
+      return
+    }
+
     setLoading(true)
 
     try {
+      const profileData = {
+        business_name: formData.businessName,
+        business_type: formData.businessType,
+        city: formData.city,
+        province: formData.province,
+        instagram_handle: formData.instagramHandle,
+        website_url: formData.websiteUrl,
+        brand_vibe: formData.brandVibe,
+        posting_frequency: formData.postingFrequency,
+        primary_goal: formData.primaryGoal,
+      }
+      
       if (profile) {
-        await api.updateBusinessProfile(profile.id, formData)
+        await api.updateBusinessProfile(profile.id, profileData)
       } else {
-        await api.createBusinessProfile(formData)
+        await api.createBusinessProfile(profileData)
       }
       
       navigate('/subscribe')
@@ -61,6 +79,15 @@ export default function OnboardingPage() {
       brandVibe: prev.brandVibe.includes(vibe)
         ? prev.brandVibe.filter(v => v !== vibe)
         : [...prev.brandVibe, vibe].slice(0, 3)
+    }))
+  }
+
+  const togglePrimaryGoal = (goal: string) => {
+    setFormData(prev => ({
+      ...prev,
+      primaryGoal: prev.primaryGoal.includes(goal)
+        ? prev.primaryGoal.filter(g => g !== goal)
+        : [...prev.primaryGoal, goal]
     }))
   }
 
@@ -117,24 +144,42 @@ export default function OnboardingPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="neighborhood">Neighborhood (Optional)</Label>
+                <Label htmlFor="province">Province/State</Label>
                 <Input
-                  id="neighborhood"
-                  placeholder="Mission District"
-                  value={formData.neighborhood}
-                  onChange={(e) => setFormData(prev => ({ ...prev, neighborhood: e.target.value }))}
+                  id="province"
+                  placeholder="California"
+                  value={formData.province}
+                  onChange={(e) => setFormData(prev => ({ ...prev, province: e.target.value }))}
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="primaryOffer">Primary Offer This Month (Optional)</Label>
-              <Input
-                id="primaryOffer"
-                placeholder="New spring menu, 20% off haircuts, Free consultation, etc."
-                value={formData.primaryOffer}
-                onChange={(e) => setFormData(prev => ({ ...prev, primaryOffer: e.target.value }))}
-              />
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="instagramHandle">Instagram Handle (Optional)</Label>
+                <Input
+                  id="instagramHandle"
+                  placeholder="@yourbusiness"
+                  value={formData.instagramHandle}
+                  onChange={(e) => setFormData(prev => ({ ...prev, instagramHandle: e.target.value }))}
+                />
+                <p className="text-xs text-muted-foreground">
+                  We'll analyze your feed for better content suggestions
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="websiteUrl">Website URL (Optional)</Label>
+                <Input
+                  id="websiteUrl"
+                  placeholder="https://yourbusiness.com"
+                  value={formData.websiteUrl}
+                  onChange={(e) => setFormData(prev => ({ ...prev, websiteUrl: e.target.value }))}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Helps us understand your brand better
+                </p>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -162,41 +207,46 @@ export default function OnboardingPage() {
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="postingFrequency">Posting Frequency</Label>
-                <Select
-                  value={formData.postingFrequency}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, postingFrequency: value }))}
-                  required
-                >
-                  <SelectTrigger id="postingFrequency">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {POSTING_FREQUENCIES.map((freq) => (
-                      <SelectItem key={freq.value} value={freq.value}>{freq.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="postingFrequency">Posting Frequency</Label>
+              <Select
+                value={formData.postingFrequency}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, postingFrequency: value }))}
+                required
+              >
+                <SelectTrigger id="postingFrequency">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {POSTING_FREQUENCIES.map((freq) => (
+                    <SelectItem key={freq.value} value={freq.value}>{freq.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="primaryGoal">Primary Goal</Label>
-                <Select
-                  value={formData.primaryGoal}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, primaryGoal: value }))}
-                  required
-                >
-                  <SelectTrigger id="primaryGoal">
-                    <SelectValue placeholder="Select goal" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PRIMARY_GOALS.map((goal) => (
-                      <SelectItem key={goal} value={goal}>{goal}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <div className="space-y-2">
+              <Label>Primary Goals (Select all that apply)</Label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {PRIMARY_GOALS.map((goal) => (
+                  <label
+                    key={goal.value}
+                    className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      formData.primaryGoal.includes(goal.value)
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <Checkbox
+                      checked={formData.primaryGoal.includes(goal.value)}
+                      onCheckedChange={() => togglePrimaryGoal(goal.value)}
+                    />
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">{goal.emoji}</span>
+                      <span className="font-medium text-sm">{goal.label}</span>
+                    </div>
+                  </label>
+                ))}
               </div>
             </div>
 
