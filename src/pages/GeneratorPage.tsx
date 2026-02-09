@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ArrowLeft, Sparkles, Loader2, Upload, Plus, X, Pencil, Check } from 'lucide-react'
+import { ArrowLeft, Sparkles, Loader2, Upload, Plus, X, Pencil, Check, Filter } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { api, MenuItem } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import { FunctionsHttpError } from '@supabase/supabase-js'
@@ -22,6 +23,8 @@ export default function GeneratorPage() {
   const [primaryOffer, setPrimaryOffer] = useState('')
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [newItem, setNewItem] = useState({ name: '', description: '', price: '', category: '' })
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+  const [focusOnCategories, setFocusOnCategories] = useState(false)
 
   const { data: profile } = useQuery({
     queryKey: ['business-profile'],
@@ -34,6 +37,11 @@ export default function GeneratorPage() {
       setMenuItems(profile.menu_items)
     }
   })
+  
+  // Get unique categories
+  const categories = Array.from(
+    new Set(profile?.menu_items?.map((item: any) => item.category).filter(Boolean))
+  ) as string[]
 
   const handleAddItem = () => {
     if (!newItem.name.trim()) {
@@ -157,6 +165,7 @@ export default function GeneratorPage() {
           productsServices: profile.products_services,
           permanentContext: profile.permanent_context,
           menuItems: profile.menu_items,
+          categoryFocus: focusOnCategories && selectedCategories.length > 0 ? selectedCategories : null,
         }
       })
 
@@ -252,6 +261,82 @@ export default function GeneratorPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Category Focus (Optional) */}
+            {categories.length > 0 && (
+              <Card className="border-primary/20 bg-accent/5">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-5 w-5 text-primary" />
+                    <CardTitle>Category-Specific Content (Optional)</CardTitle>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Generate a calendar focused on specific menu categories for more targeted promotions
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Checkbox
+                      id="focus-categories"
+                      checked={focusOnCategories}
+                      onCheckedChange={(checked) => {
+                        setFocusOnCategories(checked as boolean)
+                        if (!checked) setSelectedCategories([])
+                      }}
+                    />
+                    <Label htmlFor="focus-categories" className="cursor-pointer">
+                      Focus this calendar on specific categories
+                    </Label>
+                  </div>
+                  
+                  {focusOnCategories && (
+                    <div className="pl-7 space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        Select the categories you want to feature in this calendar:
+                      </p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {categories.map(category => {
+                          const itemCount = profile.menu_items?.filter((item: any) => item.category === category).length || 0
+                          return (
+                            <label
+                              key={category}
+                              className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                selectedCategories.includes(category)
+                                  ? 'border-primary bg-primary/5'
+                                  : 'border-border hover:border-primary/50'
+                              }`}
+                            >
+                              <Checkbox
+                                checked={selectedCategories.includes(category)}
+                                onCheckedChange={(checked) => {
+                                  setSelectedCategories(
+                                    checked
+                                      ? [...selectedCategories, category]
+                                      : selectedCategories.filter(c => c !== category)
+                                  )
+                                }}
+                              />
+                              <div>
+                                <div className="font-medium text-sm">{category}</div>
+                                <div className="text-xs text-muted-foreground">{itemCount} items</div>
+                              </div>
+                            </label>
+                          )
+                        })}
+                      </div>
+                      {selectedCategories.length > 0 && (
+                        <div className="bg-primary/10 p-3 rounded-lg">
+                          <p className="text-sm font-medium mb-1">✨ Content will focus on:</p>
+                          <p className="text-sm text-muted-foreground">
+                            {selectedCategories.join(', ')}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Menu/Services Manager */}
             <Card>

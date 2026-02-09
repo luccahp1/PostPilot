@@ -13,6 +13,8 @@ interface GenerateCalendarRequest {
   businessDescription?: string
   productsServices?: string
   permanentContext?: string
+  menuItems?: any[]
+  categoryFocus?: string[] | null
 }
 
 Deno.serve(async (req) => {
@@ -34,6 +36,8 @@ Deno.serve(async (req) => {
       businessDescription,
       productsServices,
       permanentContext,
+      menuItems,
+      categoryFocus,
     }: GenerateCalendarRequest = await req.json()
 
     console.log('Generating calendar for:', businessName)
@@ -64,6 +68,30 @@ PERMANENT INSTRUCTIONS (MUST FOLLOW IN ALL CONTENT):
 ${permanentContext}
 ` : ''
 
+    // Category-specific focus
+    const categoryInstructions = categoryFocus && categoryFocus.length > 0 ? `
+
+CATEGORY FOCUS FOR THIS CALENDAR:
+This calendar should primarily feature and promote items from these categories: ${categoryFocus.join(', ')}
+
+Menu items to highlight:
+${menuItems?.filter((item: any) => categoryFocus.includes(item.category)).map((item: any) => 
+  `- ${item.name}${item.price ? ` (${item.price})` : ''}${item.description ? ` - ${item.description}` : ''}`
+).join('\n') || 'No specific items'}
+
+Content Strategy:
+- At least 60% of posts should directly reference or feature these categories
+- Use specific product names and details from the menu items listed above
+- Create themed posts around these categories (e.g., "Dessert Week", "Drink Specials")
+- Include product highlights, recipes, pairings, and customer favorites from these categories
+` : (menuItems && menuItems.length > 0 ? `
+
+AVAILABLE MENU ITEMS (reference these in content when relevant):
+${menuItems.map((item: any) => 
+  `- ${item.name}${item.category ? ` [${item.category}]` : ''}${item.price ? ` (${item.price})` : ''}${item.description ? ` - ${item.description}` : ''}`
+).join('\n')}
+` : '')
+
     const systemPrompt = `You are an expert social media strategist for local businesses. Generate a ${totalDays}-day Instagram content calendar for ${monthYear}.
 
 Business Details:
@@ -76,6 +104,7 @@ ${productsServices ? `- What we offer: ${productsServices}` : ''}
 - Primary Goal: ${primaryGoal}
 ${primaryOffer ? `- Current Offer: ${primaryOffer}` : ''}
 ${permanentInstructions}
+${categoryInstructions}
 
 ${weeklyStructure}
 
