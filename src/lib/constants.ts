@@ -31,6 +31,7 @@ export const BRAND_VIBES = [
   { value: 'minimalist', label: 'Minimalist', emoji: '⚡' },
   { value: 'student-encouraged', label: 'Student Encouraged', emoji: '📚' },
   { value: 'professional', label: 'Professional', emoji: '💼' },
+  { value: 'modern', label: 'Modern', emoji: '🎨' },
 ]
 
 export const PRIMARY_GOALS = [
@@ -40,33 +41,37 @@ export const PRIMARY_GOALS = [
   { value: 'online-orders', label: 'Boost Online Orders', emoji: '🛒' },
   { value: 'followers', label: 'Grow Followers', emoji: '📈' },
   { value: 'brand-awareness', label: 'Build Brand Awareness', emoji: '🎯' },
+  { value: 'engagement', label: 'Increase Engagement', emoji: '💬' },
+  { value: 'website-traffic', label: 'Drive Website Traffic', emoji: '🌐' },
+  { value: 'leads', label: 'Generate Leads', emoji: '🎁' },
+  { value: 'reviews', label: 'Get More Reviews', emoji: '⭐' },
 ]
 
 // Dynamic goals based on business type
 export const BUSINESS_TYPE_GOALS: Record<string, string[]> = {
-  'Coffee Shop': ['foot-traffic', 'online-orders', 'followers', 'brand-awareness'],
-  'Cafe': ['foot-traffic', 'online-orders', 'followers', 'brand-awareness'],
-  'Bakery': ['foot-traffic', 'online-orders', 'followers', 'brand-awareness'],
-  'Restaurant': ['bookings', 'foot-traffic', 'online-orders', 'followers', 'brand-awareness'],
-  'Boutique / Retail': ['foot-traffic', 'online-orders', 'followers', 'brand-awareness'],
-  'Barber Shop': ['bookings', 'calls', 'followers', 'brand-awareness'],
-  'Hair Salon': ['bookings', 'calls', 'followers', 'brand-awareness'],
-  'Nail Salon': ['bookings', 'calls', 'followers', 'brand-awareness'],
-  'Beauty Spa': ['bookings', 'calls', 'followers', 'brand-awareness'],
-  'Massage Therapy': ['bookings', 'calls', 'followers', 'brand-awareness'],
-  'Gym / Fitness Studio': ['bookings', 'calls', 'followers', 'brand-awareness'],
-  'Yoga Studio': ['bookings', 'followers', 'brand-awareness'],
-  'Personal Trainer': ['bookings', 'calls', 'followers', 'brand-awareness'],
-  'Dentist': ['bookings', 'calls', 'brand-awareness'],
-  'Chiropractor': ['bookings', 'calls', 'brand-awareness'],
-  'Real Estate Agent': ['calls', 'followers', 'brand-awareness'],
-  'Interior Designer': ['bookings', 'calls', 'followers', 'brand-awareness'],
-  'Photographer': ['bookings', 'calls', 'followers', 'brand-awareness'],
-  'Florist': ['calls', 'online-orders', 'followers', 'brand-awareness'],
-  'Pet Grooming': ['bookings', 'calls', 'followers', 'brand-awareness'],
-  'Auto Repair': ['bookings', 'calls', 'brand-awareness'],
-  'Tattoo Studio': ['bookings', 'calls', 'followers', 'brand-awareness'],
-  'Other': ['bookings', 'foot-traffic', 'calls', 'online-orders', 'followers', 'brand-awareness'], // Show all for Other
+  'Coffee Shop': ['foot-traffic', 'online-orders', 'followers', 'brand-awareness', 'engagement', 'reviews'],
+  'Cafe': ['foot-traffic', 'online-orders', 'followers', 'brand-awareness', 'engagement', 'reviews'],
+  'Bakery': ['foot-traffic', 'online-orders', 'followers', 'brand-awareness', 'engagement', 'reviews'],
+  'Restaurant': ['bookings', 'foot-traffic', 'online-orders', 'followers', 'brand-awareness', 'engagement', 'reviews'],
+  'Boutique / Retail': ['foot-traffic', 'online-orders', 'followers', 'brand-awareness', 'engagement', 'website-traffic'],
+  'Barber Shop': ['bookings', 'calls', 'followers', 'brand-awareness', 'engagement', 'reviews'],
+  'Hair Salon': ['bookings', 'calls', 'followers', 'brand-awareness', 'engagement', 'reviews'],
+  'Nail Salon': ['bookings', 'calls', 'followers', 'brand-awareness', 'engagement', 'reviews'],
+  'Beauty Spa': ['bookings', 'calls', 'followers', 'brand-awareness', 'engagement', 'reviews'],
+  'Massage Therapy': ['bookings', 'calls', 'followers', 'brand-awareness', 'engagement', 'reviews'],
+  'Gym / Fitness Studio': ['bookings', 'calls', 'followers', 'brand-awareness', 'engagement', 'leads'],
+  'Yoga Studio': ['bookings', 'followers', 'brand-awareness', 'engagement', 'leads'],
+  'Personal Trainer': ['bookings', 'calls', 'followers', 'brand-awareness', 'engagement', 'leads'],
+  'Dentist': ['bookings', 'calls', 'brand-awareness', 'reviews', 'leads'],
+  'Chiropractor': ['bookings', 'calls', 'brand-awareness', 'reviews', 'leads'],
+  'Real Estate Agent': ['calls', 'followers', 'brand-awareness', 'website-traffic', 'leads'],
+  'Interior Designer': ['bookings', 'calls', 'followers', 'brand-awareness', 'engagement', 'website-traffic'],
+  'Photographer': ['bookings', 'calls', 'followers', 'brand-awareness', 'engagement', 'website-traffic'],
+  'Florist': ['calls', 'online-orders', 'followers', 'brand-awareness', 'engagement', 'reviews'],
+  'Pet Grooming': ['bookings', 'calls', 'followers', 'brand-awareness', 'engagement', 'reviews'],
+  'Auto Repair': ['bookings', 'calls', 'brand-awareness', 'reviews', 'leads'],
+  'Tattoo Studio': ['bookings', 'calls', 'followers', 'brand-awareness', 'engagement', 'website-traffic'],
+  'Other': ['bookings', 'foot-traffic', 'calls', 'online-orders', 'followers', 'brand-awareness', 'engagement', 'website-traffic', 'leads', 'reviews'],
 }
 
 // Helper function to get goals for a business type

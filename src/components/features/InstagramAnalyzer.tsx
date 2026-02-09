@@ -54,50 +54,50 @@ export default function InstagramAnalyzer({ instagramHandle, onAnalysisComplete 
   }
 
   if (!instagramHandle) {
-    return null
+    return (
+      <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg">
+        <Instagram className="h-8 w-8 text-muted-foreground mb-2" />
+        <p className="text-sm text-muted-foreground text-center">Add Instagram handle above to analyze feed</p>
+      </div>
+    )
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Instagram className="h-5 w-5 text-pink-600" />
-            <div>
-              <CardTitle className="text-lg">Instagram Feed Analysis</CardTitle>
-              <CardDescription>{instagramHandle}</CardDescription>
-            </div>
-          </div>
-          {analyzed && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <Instagram className="h-5 w-5 text-pink-600" />
+        <div className="flex-1">
+          <h3 className="font-semibold">Instagram Feed Analysis</h3>
+          <p className="text-xs text-muted-foreground">{instagramHandle}</p>
         </div>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground mb-4">
-          Analyze your Instagram feed to understand your posting style, colors, and content themes for better AI-generated content.
-        </p>
-        <Button 
-          onClick={handleAnalyze} 
-          disabled={analyzing || analyzed}
-          variant={analyzed ? 'outline' : 'default'}
-        >
-          {analyzing ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Analyzing Feed...
-            </>
-          ) : analyzed ? (
-            <>
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-              Feed Analyzed
-            </>
-          ) : (
-            <>
-              <Instagram className="mr-2 h-4 w-4" />
-              Analyze Instagram Feed
-            </>
-          )}
-        </Button>
-      </CardContent>
-    </Card>
+        {analyzed && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+      </div>
+      <p className="text-sm text-muted-foreground">
+        Analyze your feed to understand posting style, colors, and themes.
+      </p>
+      <Button 
+        onClick={handleAnalyze} 
+        disabled={analyzing || analyzed}
+        variant={analyzed ? 'outline' : 'default'}
+        className="w-full"
+      >
+        {analyzing ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Analyzing...
+          </>
+        ) : analyzed ? (
+          <>
+            <CheckCircle2 className="mr-2 h-4 w-4" />
+            Analyzed
+          </>
+        ) : (
+          <>
+            <Instagram className="mr-2 h-4 w-4" />
+            Analyze Feed
+          </>
+        )}
+      </Button>
+    </div>
   )
 }

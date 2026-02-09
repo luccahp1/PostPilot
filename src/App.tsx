@@ -16,6 +16,8 @@ import SchedulePage from '@/pages/SchedulePage'
 import HashtagAnalyticsPage from '@/pages/HashtagAnalyticsPage'
 import StoriesPage from '@/pages/StoriesPage'
 import ProductGalleryPage from '@/pages/ProductGalleryPage'
+import MenuManagementPage from '@/pages/MenuManagementPage'
+import CSVDocumentationPage from '@/pages/CSVDocumentationPage'
 
 function App() {
   const { user, loading } = useAuth()
@@ -46,6 +48,8 @@ function App() {
       <Route path="/hashtag-analytics" element={user ? <HashtagAnalyticsPage /> : <Navigate to="/login" />} />
       <Route path="/stories" element={user ? <StoriesPage /> : <Navigate to="/login" />} />
       <Route path="/products" element={user ? <ProductGalleryPage /> : <Navigate to="/login" />} />
+      <Route path="/menu-management" element={user ? <MenuManagementPage /> : <Navigate to="/login" />} />
+      <Route path="/csv-docs" element={user ? <CSVDocumentationPage /> : <Navigate to="/login" />} />
     </Routes>
   )
 }

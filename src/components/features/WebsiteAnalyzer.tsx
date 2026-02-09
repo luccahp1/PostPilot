@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { Globe, Loader2, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { supabase } from '@/lib/supabase'
 import { FunctionsHttpError } from '@supabase/supabase-js'
 
@@ -55,50 +54,50 @@ export default function WebsiteAnalyzer({ websiteUrl, onAnalysisComplete }: Webs
   }
 
   if (!websiteUrl) {
-    return null
+    return (
+      <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg">
+        <Globe className="h-8 w-8 text-muted-foreground mb-2" />
+        <p className="text-sm text-muted-foreground text-center">Add website URL above to analyze</p>
+      </div>
+    )
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Globe className="h-5 w-5 text-blue-600" />
-            <div>
-              <CardTitle className="text-lg">Website Analysis</CardTitle>
-              <CardDescription className="break-all">{websiteUrl}</CardDescription>
-            </div>
-          </div>
-          {analyzed && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <Globe className="h-5 w-5 text-blue-600" />
+        <div className="flex-1">
+          <h3 className="font-semibold">Website Analysis</h3>
+          <p className="text-xs text-muted-foreground truncate">{websiteUrl}</p>
         </div>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground mb-4">
-          Analyze your website to extract brand colors, messaging, and key services for more personalized content.
-        </p>
-        <Button 
-          onClick={handleAnalyze} 
-          disabled={analyzing || analyzed}
-          variant={analyzed ? 'outline' : 'default'}
-        >
-          {analyzing ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Analyzing Website...
-            </>
-          ) : analyzed ? (
-            <>
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-              Website Analyzed
-            </>
-          ) : (
-            <>
-              <Globe className="mr-2 h-4 w-4" />
-              Analyze Website
-            </>
-          )}
-        </Button>
-      </CardContent>
-    </Card>
+        {analyzed && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+      </div>
+      <p className="text-sm text-muted-foreground">
+        Extract brand colors, messaging, and key services from your website.
+      </p>
+      <Button 
+        onClick={handleAnalyze} 
+        disabled={analyzing || analyzed}
+        variant={analyzed ? 'outline' : 'default'}
+        className="w-full"
+      >
+        {analyzing ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Analyzing...
+          </>
+        ) : analyzed ? (
+          <>
+            <CheckCircle2 className="mr-2 h-4 w-4" />
+            Analyzed
+          </>
+        ) : (
+          <>
+            <Globe className="mr-2 h-4 w-4" />
+            Analyze Website
+          </>
+        )}
+      </Button>
+    </div>
   )
 }

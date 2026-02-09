@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ArrowLeft, Save, Sparkles } from 'lucide-react'
+import { ArrowLeft, Save, Sparkles, Edit } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,6 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import InstagramAnalyzer from '@/components/features/InstagramAnalyzer'
 import WebsiteAnalyzer from '@/components/features/WebsiteAnalyzer'
 import InstagramConnection from '@/components/features/InstagramConnection'
+import MenuScanner from '@/components/features/MenuScanner'
 import { api } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import { FunctionsHttpError } from '@supabase/supabase-js'
@@ -36,7 +37,7 @@ export default function SettingsPage() {
     instagramHandle: profile?.instagram_handle || '',
     websiteUrl: profile?.website_url || '',
     brandVibe: profile?.brand_vibe || [],
-    postingFrequency: profile?.posting_frequency || 'daily',
+    postingFrequency: profile?.posting_frequency || '3x-week',
     primaryGoal: profile?.primary_goal || [],
     businessDescription: profile?.business_description || '',
     productsServices: profile?.products_services || '',
@@ -243,18 +244,29 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="productsServices">What do you sell/offer?</Label>
-                  <Input
-                    id="productsServices"
-                    placeholder="e.g., Coffee, pastries, sandwiches, free WiFi workspace"
-                    value={formData.productsServices}
-                    onChange={(e) => setFormData(prev => ({ ...prev, productsServices: e.target.value }))}
-                  />
+                  <Label>Menu / Services</Label>
+                  <div className="flex gap-2">
+                    <MenuScanner
+                      onMenuScanned={async (items) => {
+                        if (!profile) return
+                        const currentItems = profile.menu_items || []
+                        const updatedItems = [...currentItems, ...items]
+                        await api.updateBusinessProfile(profile.id, { menu_items: updatedItems })
+                        queryClient.invalidateQueries({ queryKey: ['business-profile'] })
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate('/menu-management')}
+                    >
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit Menu Data
+                    </Button>
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    Main products or services you offer
+                    {profile?.menu_items?.length || 0} items in your menu
                   </p>
                 </div>
-
 
               </CardContent>
             </Card>
@@ -270,8 +282,9 @@ export default function SettingsPage() {
                   <Label>Brand Vibe (Choose 1-3)</Label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {BRAND_VIBES.map((vibe) => (
-                      <label
+                      <div
                         key={vibe.value}
+                        onClick={() => toggleBrandVibe(vibe.value)}
                         className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
                           formData.brandVibe.includes(vibe.value)
                             ? 'border-primary bg-primary/5'
@@ -286,7 +299,7 @@ export default function SettingsPage() {
                           <span className="text-xl">{vibe.emoji}</span>
                           <span className="font-medium">{vibe.label}</span>
                         </div>
-                      </label>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -432,10 +445,18 @@ export default function SettingsPage() {
             )}
 
             {/* Optional Analyzers */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <InstagramAnalyzer instagramHandle={formData.instagramHandle} />
-              <WebsiteAnalyzer websiteUrl={formData.websiteUrl} />
-            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Brand Analysis Tools</CardTitle>
+                <CardDescription>Analyze your Instagram and website for better content generation</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <InstagramAnalyzer instagramHandle={formData.instagramHandle} />
+                  <WebsiteAnalyzer websiteUrl={formData.websiteUrl} />
+                </div>
+              </CardContent>
+            </Card>
 
             <div className="flex gap-4">
               <Button type="submit" size="lg" disabled={loading}>
