@@ -12,7 +12,7 @@ export default function DashboardPage() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
 
-  const { data: profile } = useQuery({
+  const { data: profile, isLoading: profileLoading, error: profileError } = useQuery({
     queryKey: ['business-profile'],
     queryFn: api.getBusinessProfile,
   })
@@ -23,14 +23,17 @@ export default function DashboardPage() {
   })
 
   useEffect(() => {
-    if (!profile) {
+    // Only redirect after profile has finished loading
+    if (profileLoading) return
+    
+    if (profileError || !profile) {
       navigate('/onboarding')
     } else if (profile.subscription_status !== 'active') {
       navigate('/subscribe')
     }
-  }, [profile, navigate])
+  }, [profile, profileLoading, profileError, navigate])
 
-  if (!profile) {
+  if (profileLoading || !profile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
