@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -32,11 +32,11 @@ export default function GeneratorPage() {
   })
 
   // Initialize menu items from profile
-  useState(() => {
+  useEffect(() => {
     if (profile?.menu_items) {
       setMenuItems(profile.menu_items)
     }
-  })
+  }, [profile])
   
   // Get unique categories
   const categories = Array.from(

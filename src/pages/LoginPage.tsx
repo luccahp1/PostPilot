@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Sparkles, ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Sparkles, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-import { useAuth, authService } from '@/lib/auth'
+import { useAuth } from '@/lib/auth'
+import { supabase } from '@/lib/supabase'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -20,77 +21,101 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const user = await authService.signInWithPassword(email, password)
-      login(authService.mapUser(user))
-      navigate('/dashboard')
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) throw error
+
+      if (data.user) {
+        const authUser = {
+          id: data.user.id,
+          email: data.user.email!,
+          username: data.user.user_metadata?.username || data.user.email!.split('@')[0],
+          avatar: data.user.user_metadata?.avatar_url,
+        }
+        login(authUser)
+        navigate('/dashboard')
+      }
     } catch (error: any) {
-      toast.error(error.message)
+      console.error('Login error:', error)
+      toast.error(error.message || 'Invalid email or password')
       setLoading(false)
     }
   }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Link to="/" className="absolute top-4 left-4">
-        <Button variant="ghost" size="sm">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Home
-        </Button>
-      </Link>
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="flex items-center gap-2">
+      <div className="w-full max-w-md">
+        <Link to="/">
+          <Button variant="ghost" className="mb-6">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+        </Link>
+
+        <Card>
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
               <Sparkles className="h-8 w-8 text-primary" />
-              <span className="font-bold text-2xl">PostPilot</span>
             </div>
-          </div>
-          <CardTitle>Welcome back</CardTitle>
-          <CardDescription>Login to continue generating content</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@business.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Logging in...' : 'Login'}
-            </Button>
-          </form>
+            <CardTitle>Welcome Back</CardTitle>
+            <CardDescription>Sign in to your PostPilot account</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+              </div>
 
-          <div className="mt-4 text-center">
-            <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-              Forgot password?
-            </Link>
-          </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                    Forgot password?
+                  </Link>
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+              </div>
 
-          <div className="mt-6 text-center text-sm">
-            <span className="text-muted-foreground">Don't have an account? </span>
-            <Link to="/register" className="text-primary hover:underline">
-              Sign up
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  'Sign In'
+                )}
+              </Button>
+
+              <p className="text-center text-sm text-muted-foreground">
+                Don't have an account?{' '}
+                <Link to="/register" className="text-primary hover:underline">
+                  Sign up
+                </Link>
+              </p>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Loader2, Check, Sparkles } from 'lucide-react'
+import { CreditCard, Check, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { api } from '@/lib/api'
@@ -18,29 +18,24 @@ export default function SubscribePage() {
     queryFn: api.getBusinessProfile,
   })
 
-  useEffect(() => {
-    if (profile?.subscription_status === 'active') {
-      navigate('/generator')
-    }
-  }, [profile, navigate])
-
   const handleSubscribe = async () => {
     if (!profile) {
-      toast.error('Please complete your business profile first')
+      toast.error('Please complete onboarding first')
       navigate('/onboarding')
       return
     }
 
     setLoading(true)
-
     try {
-      // Use test price ID - in production, replace with actual Stripe price ID
-      const priceId = import.meta.env.VITE_STRIPE_PRICE_ID || 'price_1QsABUP1vW7I7gxdGj58VSXY' // Replace with your actual Stripe price ID
-      const successUrl = `${window.location.origin}/generator`
+      const successUrl = `${window.location.origin}/dashboard`
       const cancelUrl = `${window.location.origin}/subscribe`
 
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-        body: { priceId, successUrl, cancelUrl }
+        body: {
+          priceId: import.meta.env.VITE_STRIPE_PRICE_ID || 'price_default',
+          successUrl,
+          cancelUrl,
+        }
       })
 
       if (error) {
@@ -63,69 +58,82 @@ export default function SubscribePage() {
         throw new Error('No checkout URL returned')
       }
     } catch (error: any) {
-      console.error('Checkout error:', error)
-      toast.error(error.message)
+      console.error('Subscription error:', error)
+      toast.error(error.message || 'Failed to start subscription')
       setLoading(false)
     }
   }
 
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-lg">
-        <CardHeader className="text-center">
+      <div className="max-w-lg w-full">
+        <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <Sparkles className="h-12 w-12 text-primary" />
           </div>
-          <CardTitle className="text-3xl">Subscribe to PostPilot</CardTitle>
-          <CardDescription>
-            Start generating unlimited 30-day content calendars
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-8">
-          <div className="text-center">
-            <div className="text-5xl font-bold mb-2">$30</div>
-            <div className="text-lg text-muted-foreground">per month</div>
-          </div>
-
-          <div className="space-y-4">
-            {[
-              'Unlimited 30-day calendar generations',
-              'All post types & content pillars',
-              'Captions, hashtags, CTAs, Canva prompts',
-              'CSV & text file exports',
-              'Regenerate individual days',
-              'Cancel anytime',
-            ].map((feature, idx) => (
-              <div key={idx} className="flex items-center gap-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center">
-                  <Check className="h-4 w-4" />
-                </div>
-                <span>{feature}</span>
-              </div>
-            ))}
-          </div>
-
-          <Button
-            size="lg"
-            className="w-full"
-            onClick={handleSubscribe}
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Redirecting...
-              </>
-            ) : (
-              'Subscribe Now'
-            )}
-          </Button>
-
-          <p className="text-sm text-center text-muted-foreground">
-            Secure payment powered by Stripe. Cancel anytime.
+          <h1 className="text-3xl font-bold mb-2">Start Your Subscription</h1>
+          <p className="text-muted-foreground">
+            Get unlimited 30-day calendars for {profile.business_name}
           </p>
-        </CardContent>
-      </Card>
+        </div>
+
+        <Card className="border-2 border-primary/20">
+          <CardHeader className="text-center">
+            <div className="inline-block mx-auto px-4 py-1.5 bg-accent/10 text-accent rounded-full text-sm font-medium mb-4">
+              Simple Pricing
+            </div>
+            <div className="mb-4">
+              <span className="text-5xl font-bold">$30</span>
+              <span className="text-xl text-muted-foreground">/month</span>
+            </div>
+            <CardTitle>PostPilot Pro</CardTitle>
+            <CardDescription>Everything you need to succeed on Instagram</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-3">
+              {[
+                'Unlimited 30-day calendar generations',
+                'All post types: Reels, Photos, Carousels, Stories',
+                'AI-powered captions, hashtags, and CTAs',
+                'Canva design prompts for every post',
+                'CSV & text file exports',
+                'Regenerate individual days anytime',
+                'Instagram auto-posting (optional)',
+                'Menu/product image integration',
+                'Analytics & performance tracking',
+                'Cancel anytime, no contracts',
+              ].map((feature, idx) => (
+                <div key={idx} className="flex items-center gap-3">
+                  <Check className="h-5 w-5 text-accent flex-shrink-0" />
+                  <span className="text-sm">{feature}</span>
+                </div>
+              ))}
+            </div>
+
+            <Button 
+              onClick={handleSubscribe} 
+              size="lg" 
+              className="w-full"
+              disabled={loading}
+            >
+              <CreditCard className="mr-2 h-5 w-5" />
+              {loading ? 'Loading...' : 'Subscribe Now'}
+            </Button>
+
+            <p className="text-xs text-center text-muted-foreground">
+              Secure payment processing by Stripe • Cancel anytime
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

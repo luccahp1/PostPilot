@@ -44,13 +44,15 @@ export default function InstagramConnection({ profile, onTogglePosting }: Instag
 
   // Check for OAuth redirect with access token
   useState(() => {
-    const hash = window.location.hash
-    if (hash.includes('access_token')) {
-      const params = new URLSearchParams(hash.substring(1))
-      const accessToken = params.get('access_token')
-      
-      if (accessToken) {
-        handleOAuthCallback(accessToken)
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash
+      if (hash.includes('access_token')) {
+        const params = new URLSearchParams(hash.substring(1))
+        const accessToken = params.get('access_token')
+        
+        if (accessToken) {
+          handleOAuthCallback(accessToken)
+        }
       }
     }
   })

@@ -2,64 +2,38 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ArrowLeft, TrendingUp, Sparkles, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Hash, TrendingUp, TrendingDown, Loader2, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/lib/supabase'
 import { FunctionsHttpError } from '@supabase/supabase-js'
-import { api } from '@/lib/api'
 
 export default function HashtagAnalyticsPage() {
   const navigate = useNavigate()
-  const [analyzing, setAnalyzing] = useState(false)
-  const [analysis, setAnalysis] = useState<any>(null)
+  const [analyzingHashtag, setAnalyzingHashtag] = useState<string | null>(null)
+  const [newHashtag, setNewHashtag] = useState('')
 
-  const { data: profile } = useQuery({
-    queryKey: ['business-profile'],
-    queryFn: api.getBusinessProfile,
-  })
-
-  const { data: recentItems = [] } = useQuery({
-    queryKey: ['recent-calendar-items'],
+  const { data: hashtags = [] } = useQuery({
+    queryKey: ['hashtag-analytics'],
     queryFn: async () => {
-      const { data: calendars } = await supabase
-        .from('calendars')
-        .select('id')
-        .order('created_at', { ascending: false })
-        .limit(1)
-
-      if (!calendars || calendars.length === 0) return []
-
       const { data, error } = await supabase
-        .from('calendar_items')
-        .select('hashtags')
-        .eq('calendar_id', calendars[0].id)
-        .order('created_at', { ascending: false })
-        .limit(10)
+        .from('hashtag_analytics')
+        .select('*')
+        .order('performance_score', { ascending: false })
 
       if (error) throw error
       return data || []
     }
   })
 
-  const allHashtags = Array.from(
-    new Set(recentItems.flatMap((item: any) => item.hashtags || []))
-  )
+  const handleAnalyzeHashtag = async (hashtag: string) => {
+    setAnalyzingHashtag(hashtag)
 
-  const handleAnalyze = async () => {
-    if (!profile || allHashtags.length === 0) {
-      toast.error('No hashtags to analyze')
-      return
-    }
-
-    setAnalyzing(true)
     try {
       const { data, error } = await supabase.functions.invoke('analyze-hashtag-performance', {
-        body: {
-          businessType: profile.business_type,
-          currentHashtags: allHashtags
-        }
+        body: { hashtag }
       })
 
       if (error) {
@@ -76,14 +50,24 @@ export default function HashtagAnalyticsPage() {
         throw new Error(errorMessage)
       }
 
-      setAnalysis(data)
-      toast.success('Hashtag analysis complete!')
+      toast.success(data.message || 'Hashtag analyzed successfully!')
     } catch (error: any) {
       console.error('Hashtag analysis error:', error)
-      toast.error(error.message || 'Failed to analyze hashtags')
+      toast.error(error.message || 'Failed to analyze hashtag')
     } finally {
-      setAnalyzing(false)
+      setAnalyzingHashtag(null)
     }
+  }
+
+  const handleAddHashtag = () => {
+    if (!newHashtag.trim()) {
+      toast.error('Please enter a hashtag')
+      return
+    }
+
+    const formatted = newHashtag.startsWith('#') ? newHashtag : `#${newHashtag}`
+    handleAnalyzeHashtag(formatted)
+    setNewHashtag('')
   }
 
   return (
@@ -98,123 +82,119 @@ export default function HashtagAnalyticsPage() {
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Hashtag Analytics</h1>
             <p className="text-muted-foreground">
-              Optimize your hashtag strategy with AI-powered insights
+              Track performance and discover trending alternatives
             </p>
           </div>
 
-          <Card className="mb-6">
+          {/* Add Hashtag */}
+          <Card className="mb-8">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                Your Current Hashtags
+                <Sparkles className="h-5 w-5 text-primary" />
+                Analyze New Hashtag
               </CardTitle>
               <CardDescription>
-                {allHashtags.length} unique hashtags from recent posts
+                Add a hashtag to track its performance over time
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {allHashtags.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4">
-                  No hashtags found. Generate some content first!
-                </p>
-              ) : (
-                <>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {allHashtags.slice(0, 20).map((tag, idx) => (
-                      <Badge key={idx} variant="secondary">{tag}</Badge>
-                    ))}
-                    {allHashtags.length > 20 && (
-                      <Badge variant="outline">+{allHashtags.length - 20} more</Badge>
-                    )}
-                  </div>
-                  <Button onClick={handleAnalyze} disabled={analyzing}>
-                    {analyzing ? (
-                      <>
-                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                        Analyzing...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        Analyze Performance
-                      </>
-                    )}
-                  </Button>
-                </>
-              )}
+              <div className="flex gap-2">
+                <Input
+                  placeholder="#yourbusinesshashtag"
+                  value={newHashtag}
+                  onChange={(e) => setNewHashtag(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddHashtag()}
+                />
+                <Button onClick={handleAddHashtag} disabled={!!analyzingHashtag}>
+                  {analyzingHashtag ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    'Add'
+                  )}
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
-          {analysis && (
-            <>
-              {/* Underperforming Hashtags */}
-              {analysis.underperforming && analysis.underperforming.length > 0 && (
-                <Card className="mb-6">
-                  <CardHeader>
-                    <CardTitle className="text-destructive">⚠️ Underperforming Hashtags</CardTitle>
-                    <CardDescription>
-                      Consider replacing these hashtags for better reach
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {analysis.underperforming.map((tag: string, idx: number) => (
-                        <Badge key={idx} variant="destructive">{tag}</Badge>
-                      ))}
+          {/* Hashtags List */}
+          {hashtags.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <Hash className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground mb-4">
+                  No hashtags tracked yet. Add your first hashtag to start monitoring performance!
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {hashtags.map((tag: any) => (
+                <Card key={tag.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-primary mb-1">{tag.hashtag}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Last used: {tag.last_used ? new Date(tag.last_used).toLocaleDateString() : 'Never'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {tag.performance_score > 0 ? (
+                          <Badge className="bg-green-600">
+                            <TrendingUp className="mr-1 h-3 w-3" />
+                            {tag.performance_score.toFixed(1)} score
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">
+                            <TrendingDown className="mr-1 h-3 w-3" />
+                            No data
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center p-3 bg-accent/10 rounded-lg">
+                        <div className="text-2xl font-bold">{tag.impressions?.toLocaleString() || 0}</div>
+                        <div className="text-xs text-muted-foreground">Impressions</div>
+                      </div>
+                      <div className="text-center p-3 bg-accent/10 rounded-lg">
+                        <div className="text-2xl font-bold">{tag.reach?.toLocaleString() || 0}</div>
+                        <div className="text-xs text-muted-foreground">Reach</div>
+                      </div>
+                      <div className="text-center p-3 bg-accent/10 rounded-lg">
+                        <div className="text-2xl font-bold">{tag.engagement?.toLocaleString() || 0}</div>
+                        <div className="text-xs text-muted-foreground">Engagement</div>
+                      </div>
+                      <div className="text-center p-3 bg-accent/10 rounded-lg">
+                        <div className="text-2xl font-bold">
+                          {tag.performance_score ? tag.performance_score.toFixed(1) : '0'}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Score</div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleAnalyzeHashtag(tag.hashtag)}
+                        disabled={analyzingHashtag === tag.hashtag}
+                      >
+                        {analyzingHashtag === tag.hashtag ? (
+                          <>
+                            <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                            Analyzing...
+                          </>
+                        ) : (
+                          'Refresh Data'
+                        )}
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
-              )}
-
-              {/* Suggested Hashtags */}
-              {analysis.suggested && analysis.suggested.length > 0 && (
-                <Card className="mb-6">
-                  <CardHeader>
-                    <CardTitle className="text-green-600">✨ Suggested Hashtags</CardTitle>
-                    <CardDescription>
-                      Trending and niche-specific hashtags for better engagement
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {analysis.suggested.map((tag: string, idx: number) => (
-                        <Badge 
-                          key={idx} 
-                          className="bg-green-600 hover:bg-green-700 cursor-pointer"
-                          onClick={() => {
-                            navigator.clipboard.writeText(tag)
-                            toast.success(`Copied ${tag}`)
-                          }}
-                        >
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        navigator.clipboard.writeText(analysis.suggested.join(' '))
-                        toast.success('All suggested hashtags copied!')
-                      }}
-                    >
-                      Copy All
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Reasoning */}
-              {analysis.reasoning && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>💡 Analysis Insights</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">{analysis.reasoning}</p>
-                  </CardContent>
-                </Card>
-              )}
-            </>
+              ))}
+            </div>
           )}
         </div>
       </div>
