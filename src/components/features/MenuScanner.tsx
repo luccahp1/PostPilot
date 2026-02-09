@@ -9,12 +9,13 @@ import { supabase } from '@/lib/supabase'
 import { FunctionsHttpError } from '@supabase/supabase-js'
 
 interface MenuScannerProps {
-  onMenuScanned: (items: any[]) => void
+  onMenuScanned: (items: any[], replace?: boolean) => void
 }
 
 export default function MenuScanner({ onMenuScanned }: MenuScannerProps) {
   const [scanning, setScanning] = useState(false)
   const [showConfirmation, setShowConfirmation] = useState(false)
+  const [showReplaceWarning, setShowReplaceWarning] = useState(false)
   const [scannedItems, setScannedItems] = useState<any[]>([])
   const [editingItems, setEditingItems] = useState<any[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -104,12 +105,25 @@ export default function MenuScanner({ onMenuScanned }: MenuScannerProps) {
     })
   }
 
-  const handleConfirm = () => {
-    onMenuScanned(editingItems)
+  const handleAddToCurrentItems = () => {
+    onMenuScanned(editingItems, false)
     setShowConfirmation(false)
     setScannedItems([])
     setEditingItems([])
     toast.success('Menu items added!')
+  }
+
+  const handleReplaceAllItems = () => {
+    setShowReplaceWarning(true)
+  }
+
+  const confirmReplaceAll = () => {
+    onMenuScanned(editingItems, true)
+    setShowConfirmation(false)
+    setShowReplaceWarning(false)
+    setScannedItems([])
+    setEditingItems([])
+    toast.success('Menu replaced successfully!')
   }
 
   const handleCancel = () => {
@@ -235,11 +249,45 @@ export default function MenuScanner({ onMenuScanned }: MenuScannerProps) {
               ))}
 
               <div className="flex gap-2 pt-4">
-                <Button onClick={handleConfirm} disabled={editingItems.length === 0}>
+                <Button onClick={handleAddToCurrentItems} disabled={editingItems.length === 0}>
                   <Check className="mr-2 h-4 w-4" />
-                  Add {editingItems.length} Items
+                  Add to Current Items
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={handleReplaceAllItems} 
+                  disabled={editingItems.length === 0}
+                >
+                  Replace All Current Items
                 </Button>
                 <Button variant="outline" onClick={handleCancel}>
+                  Cancel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Replace Warning Dialog */}
+      {showReplaceWarning && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <CardTitle className="text-destructive">⚠️ Warning</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-destructive font-semibold">
+                By doing this you will be deleting all your current menu items and replacing all of them with the items from the uploaded picture.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                This action cannot be undone. Are you sure you want to proceed?
+              </p>
+              <div className="flex gap-2">
+                <Button variant="destructive" onClick={confirmReplaceAll}>
+                  Yes, Replace All Items
+                </Button>
+                <Button variant="outline" onClick={() => setShowReplaceWarning(false)}>
                   Cancel
                 </Button>
               </div>

@@ -247,10 +247,10 @@ export default function SettingsPage() {
                   <Label>Menu / Services</Label>
                   <div className="flex gap-2">
                     <MenuScanner
-                      onMenuScanned={async (items) => {
+                      onMenuScanned={async (items, replace = false) => {
                         if (!profile) return
                         const currentItems = profile.menu_items || []
-                        const updatedItems = [...currentItems, ...items]
+                        const updatedItems = replace ? items : [...currentItems, ...items]
                         await api.updateBusinessProfile(profile.id, { menu_items: updatedItems })
                         queryClient.invalidateQueries({ queryKey: ['business-profile'] })
                       }}
@@ -282,9 +282,8 @@ export default function SettingsPage() {
                   <Label>Brand Vibe (Choose 1-3)</Label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {BRAND_VIBES.map((vibe) => (
-                      <div
+                      <label
                         key={vibe.value}
-                        onClick={() => toggleBrandVibe(vibe.value)}
                         className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
                           formData.brandVibe.includes(vibe.value)
                             ? 'border-primary bg-primary/5'
@@ -299,7 +298,7 @@ export default function SettingsPage() {
                           <span className="text-xl">{vibe.emoji}</span>
                           <span className="font-medium">{vibe.label}</span>
                         </div>
-                      </div>
+                      </label>
                     ))}
                   </div>
                 </div>
