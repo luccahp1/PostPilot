@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Sparkles, Calendar, Plus, Settings, LogOut, BarChart3, CreditCard, Clock, Hash, Instagram, Image } from 'lucide-react'
+import { Sparkles, Calendar, Plus, Settings, LogOut, BarChart3, CreditCard, Clock, Hash, Instagram, Image, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { useAuth } from '@/lib/auth'
@@ -147,6 +147,33 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">Optimize hashtags</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid sm:grid-cols-1 gap-4 mb-8">
+          <Card className="bg-gradient-to-r from-green-500/10 to-blue-500/10 border-green-500/20 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/menu-analytics')}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-green-500" />
+                Menu Item Performance
+              </CardTitle>
+              <CardDescription>
+                See which products drive engagement and discover promotion opportunities
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-6 text-sm">
+                <div>
+                  <span className="font-semibold">📊 Track</span> item frequency in content
+                </div>
+                <div>
+                  <span className="font-semibold">💬 Measure</span> engagement per product
+                </div>
+                <div>
+                  <span className="font-semibold">💡 Discover</span> underutilized items
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

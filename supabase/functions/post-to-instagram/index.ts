@@ -127,6 +127,52 @@ Deno.serve(async (req) => {
     const { id: postId } = await publishResponse.json()
     console.log('Post published successfully:', postId)
 
+    // Sync analytics if this post featured a product
+    if (item.suggested_product) {
+      try {
+        // Wait a few seconds for Instagram to process the post, then fetch insights
+        setTimeout(async () => {
+          try {
+            const insightsResponse = await fetch(
+              `https://graph.facebook.com/v18.0/${postId}/insights?metric=engagement,impressions,reach,saved&access_token=${profile.instagram_access_token}`
+            )
+            
+            if (insightsResponse.ok) {
+              const insightsData = await insightsResponse.json()
+              const metrics = {
+                likes: 0,
+                comments: 0,
+                saves: 0,
+                reach: 0,
+                impressions: 0,
+              }
+              
+              // Parse Instagram insights
+              insightsData.data?.forEach((insight: any) => {
+                if (insight.name === 'engagement') metrics.likes = insight.values[0]?.value || 0
+                if (insight.name === 'impressions') metrics.impressions = insight.values[0]?.value || 0
+                if (insight.name === 'reach') metrics.reach = insight.values[0]?.value || 0
+                if (insight.name === 'saved') metrics.saves = insight.values[0]?.value || 0
+              })
+              
+              // Call sync analytics function
+              await supabaseClient.functions.invoke('sync-instagram-analytics', {
+                body: {
+                  calendarItemId,
+                  instagramPostId: postId,
+                  metrics,
+                }
+              })
+            }
+          } catch (analyticsError) {
+            console.error('Failed to sync analytics:', analyticsError)
+          }
+        }, 5000) // Wait 5 seconds
+      } catch (error) {
+        console.error('Analytics sync error:', error)
+      }
+    }
+
     // Mark the calendar item as posted (you could add a 'posted_to_instagram' column if needed)
     
     return new Response(

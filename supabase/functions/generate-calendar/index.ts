@@ -47,6 +47,9 @@ Deno.serve(async (req) => {
 
     // Fetch product images for AI reference
     let productImages: any[] = []
+    // Fetch menu item analytics to identify underutilized items
+    let menuAnalytics: any[] = []
+    
     if (userId) {
       const supabaseClient = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
@@ -63,6 +66,18 @@ Deno.serve(async (req) => {
       if (images) {
         productImages = images
         console.log(`Found ${productImages.length} product images`)
+      }
+      
+      // Get analytics to identify underutilized items
+      const { data: analytics } = await supabaseClient
+        .from('menu_item_analytics')
+        .select('*')
+        .eq('user_id', userId)
+        .order('underutilized_score', { ascending: false })
+      
+      if (analytics) {
+        menuAnalytics = analytics
+        console.log(`Found analytics for ${menuAnalytics.length} items`)
       }
     }
 
@@ -99,24 +114,55 @@ CATEGORY FOCUS FOR THIS CALENDAR:
 This calendar should primarily feature and promote items from these categories: ${categoryFocus.join(', ')}
 
 Menu items to highlight:
-${menuItems?.filter((item: any) => categoryFocus.includes(item.category)).map((item: any) => 
-  `- ${item.name}${item.price ? ` (${item.price})` : ''}${item.description ? ` - ${item.description}` : ''}`
-).join('\n') || 'No specific items'}
+${menuItems?.filter((item: any) => categoryFocus.includes(item.category)).map((item: any) => {
+  const analytics = menuAnalytics.find((a: any) => a.menu_item_id === item.id)
+  const itemImages = productImages.filter((img: any) => img.menu_item_id === item.id)
+  const featuredImage = itemImages.find((img: any) => img.is_featured)
+  const imageNote = featuredImage ? ` [HAS PRODUCT IMAGE: ${featuredImage.image_url}]` : itemImages.length > 0 ? ` [HAS ${itemImages.length} IMAGES]` : ''
+  const analyticsNote = analytics ? ` [Featured ${analytics.times_featured}x, Last: ${analytics.last_featured_date || 'Never'}]` : ' [NEVER FEATURED - PRIORITIZE]'
+  return `- ${item.name}${item.price ? ` (${item.price})` : ''}${item.description ? ` - ${item.description}` : ''}${imageNote}${analyticsNote}`
+}).join('\n') || 'No specific items'}
 
 Content Strategy:
 - At least 60% of posts should directly reference or feature these categories
 - Use specific product names and details from the menu items listed above
 - Create themed posts around these categories (e.g., "Dessert Week", "Drink Specials")
 - Include product highlights, recipes, pairings, and customer favorites from these categories
+- PRIORITIZE items marked as "NEVER FEATURED" to ensure balanced promotion
 ` : (menuItems && menuItems.length > 0 ? `
 
 AVAILABLE MENU ITEMS (reference these in content when relevant):
 ${menuItems.map((item: any) => {
+  const analytics = menuAnalytics.find((a: any) => a.menu_item_id === item.id)
   const itemImages = productImages.filter((img: any) => img.menu_item_id === item.id)
   const featuredImage = itemImages.find((img: any) => img.is_featured)
   const imageNote = featuredImage ? ` [HAS PRODUCT IMAGE: ${featuredImage.image_url}]` : itemImages.length > 0 ? ` [HAS ${itemImages.length} IMAGES]` : ''
-  return `- ${item.name}${item.category ? ` [${item.category}]` : ''}${item.price ? ` (${item.price})` : ''}${item.description ? ` - ${item.description}` : ''}${imageNote}`
+  
+  let priorityNote = ''
+  if (analytics) {
+    const daysSinceLastFeatured = analytics.last_featured_date 
+      ? Math.floor((new Date().getTime() - new Date(analytics.last_featured_date).getTime()) / (1000 * 60 * 60 * 24))
+      : 999
+    
+    if (daysSinceLastFeatured > 30) {
+      priorityNote = ' [UNDERUTILIZED - HIGH PRIORITY]'
+    } else if (analytics.times_featured < 3) {
+      priorityNote = ' [LOW EXPOSURE - MEDIUM PRIORITY]'
+    } else {
+      priorityNote = ` [Featured ${analytics.times_featured}x recently]`
+    }
+  } else {
+    priorityNote = ' [NEVER FEATURED - HIGHEST PRIORITY]'
+  }
+  
+  return `- ${item.name}${item.category ? ` [${item.category}]` : ''}${item.price ? ` (${item.price})` : ''}${item.description ? ` - ${item.description}` : ''}${imageNote}${priorityNote}`
 }).join('\n')}
+
+CONTENT BALANCE STRATEGY:
+- Prioritize featuring items marked as "HIGHEST PRIORITY" (never featured) and "HIGH PRIORITY" (underutilized)
+- Distribute item features evenly across the calendar to ensure all products get exposure
+- Aim for variety: don't feature the same item more than 2-3 times in a 30-day calendar
+- When multiple items are available for a post theme, choose the one with lower recent exposure
 ` : '')
 
     const systemPrompt = `You are an expert social media strategist for local businesses. Generate a ${totalDays}-day Instagram content calendar for ${monthYear}.

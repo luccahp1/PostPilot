@@ -18,6 +18,7 @@ import StoriesPage from '@/pages/StoriesPage'
 import ProductGalleryPage from '@/pages/ProductGalleryPage'
 import MenuManagementPage from '@/pages/MenuManagementPage'
 import CSVDocumentationPage from '@/pages/CSVDocumentationPage'
+import MenuAnalyticsPage from '@/pages/MenuAnalyticsPage'
 
 function App() {
   const { user, loading } = useAuth()
@@ -50,6 +51,7 @@ function App() {
       <Route path="/products" element={user ? <ProductGalleryPage /> : <Navigate to="/login" />} />
       <Route path="/menu-management" element={user ? <MenuManagementPage /> : <Navigate to="/login" />} />
       <Route path="/csv-docs" element={user ? <CSVDocumentationPage /> : <Navigate to="/login" />} />
+      <Route path="/menu-analytics" element={user ? <MenuAnalyticsPage /> : <Navigate to="/login" />} />
     </Routes>
   )
 }
