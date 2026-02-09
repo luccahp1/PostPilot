@@ -29,6 +29,20 @@ export interface MenuItem {
   description?: string
   price?: string
   category?: string
+  order?: number
+}
+
+export interface ProductImage {
+  id: string
+  user_id: string
+  menu_item_id: string
+  image_url: string
+  image_path: string
+  product_name: string
+  description?: string
+  is_featured: boolean
+  display_order: number
+  created_at: string
 }
 
 export interface Calendar {
@@ -179,5 +193,28 @@ export const api = {
 
     if (error) throw error
     return data
+  },
+
+  // Product Images
+  async getProductImages(menuItemId: string): Promise<ProductImage[]> {
+    const { data, error } = await supabase
+      .from('product_images')
+      .select('*')
+      .eq('menu_item_id', menuItemId)
+      .order('display_order', { ascending: true })
+
+    if (error) throw error
+    return data || []
+  },
+
+  async getAllProductImages(userId: string): Promise<ProductImage[]> {
+    const { data, error } = await supabase
+      .from('product_images')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data || []
   },
 }

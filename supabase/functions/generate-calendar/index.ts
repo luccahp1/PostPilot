@@ -1,4 +1,5 @@
 import { corsHeaders } from '../_shared/cors.ts'
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 interface GenerateCalendarRequest {
   businessName: string
@@ -15,6 +16,7 @@ interface GenerateCalendarRequest {
   permanentContext?: string
   menuItems?: any[]
   categoryFocus?: string[] | null
+  userId?: string
 }
 
 Deno.serve(async (req) => {
@@ -38,9 +40,31 @@ Deno.serve(async (req) => {
       permanentContext,
       menuItems,
       categoryFocus,
+      userId,
     }: GenerateCalendarRequest = await req.json()
 
     console.log('Generating calendar for:', businessName)
+
+    // Fetch product images for AI reference
+    let productImages: any[] = []
+    if (userId) {
+      const supabaseClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      )
+
+      const { data: images } = await supabaseClient
+        .from('product_images')
+        .select('*')
+        .eq('user_id', userId)
+        .order('is_featured', { ascending: false })
+        .order('display_order', { ascending: true })
+
+      if (images) {
+        productImages = images
+        console.log(`Found ${productImages.length} product images`)
+      }
+    }
 
     const location = [city, neighborhood].filter(Boolean).join(', ')
     
@@ -87,9 +111,12 @@ Content Strategy:
 ` : (menuItems && menuItems.length > 0 ? `
 
 AVAILABLE MENU ITEMS (reference these in content when relevant):
-${menuItems.map((item: any) => 
-  `- ${item.name}${item.category ? ` [${item.category}]` : ''}${item.price ? ` (${item.price})` : ''}${item.description ? ` - ${item.description}` : ''}`
-).join('\n')}
+${menuItems.map((item: any) => {
+  const itemImages = productImages.filter((img: any) => img.menu_item_id === item.id)
+  const featuredImage = itemImages.find((img: any) => img.is_featured)
+  const imageNote = featuredImage ? ` [HAS PRODUCT IMAGE: ${featuredImage.image_url}]` : itemImages.length > 0 ? ` [HAS ${itemImages.length} IMAGES]` : ''
+  return `- ${item.name}${item.category ? ` [${item.category}]` : ''}${item.price ? ` (${item.price})` : ''}${item.description ? ` - ${item.description}` : ''}${imageNote}`
+}).join('\n')}
 ` : '')
 
     const systemPrompt = `You are an expert social media strategist for local businesses. Generate a ${totalDays}-day Instagram content calendar for ${monthYear}.
@@ -105,6 +132,13 @@ ${productsServices ? `- What we offer: ${productsServices}` : ''}
 ${primaryOffer ? `- Current Offer: ${primaryOffer}` : ''}
 ${permanentInstructions}
 ${categoryInstructions}
+
+${productImages.length > 0 ? `
+PRODUCT IMAGE REFERENCES:
+The business has uploaded ${productImages.length} product images. When creating posts about specific menu items that have product images (marked with [HAS PRODUCT IMAGE] or [HAS X IMAGES]), indicate which product the post should feature so we can automatically select the best matching image.
+
+For product-specific posts, include a "suggestedProduct" field with the exact product name from the menu items list.
+` : ''}
 
 ${weeklyStructure}
 
@@ -132,7 +166,8 @@ Return ONLY valid JSON in this exact format:
       "hashtags": ["#localbusiness", "#${businessType.toLowerCase().replace(/\s/g, '')}", ...],
       "cta": "Visit us this weekend!",
       "canvaPrompt": "Create a vibrant photo collage with...",
-      "imageIdeas": "Behind counter shot, product close-up"
+      "imageIdeas": "Behind counter shot, product close-up",
+      "suggestedProduct": "Product name from menu (ONLY if this post features a specific product)"
     }
   ]
 }
@@ -194,7 +229,40 @@ Generate exactly ${totalDays} days starting from the 1st of the month. Use reali
       throw new Error('Invalid calendar data structure')
     }
 
-    return new Response(JSON.stringify(calendarData), {
+    // Match suggested products with actual product images
+    const enhancedItems = calendarData.items.map((item: any) => {
+      if (item.suggestedProduct && productImages.length > 0) {
+        // Find matching menu item
+        const menuItem = menuItems?.find((m: any) => 
+          m.name.toLowerCase() === item.suggestedProduct.toLowerCase()
+        )
+
+        if (menuItem) {
+          // Find featured image for this menu item
+          const featuredImage = productImages.find((img: any) => 
+            img.menu_item_id === menuItem.id && img.is_featured
+          )
+
+          // Or just get the first image for this menu item
+          const anyImage = productImages.find((img: any) => 
+            img.menu_item_id === menuItem.id
+          )
+
+          const selectedImage = featuredImage || anyImage
+
+          if (selectedImage) {
+            return {
+              ...item,
+              productImageUrl: selectedImage.image_url,
+              productImageId: selectedImage.id,
+            }
+          }
+        }
+      }
+      return item
+    })
+
+    return new Response(JSON.stringify({ items: enhancedItems }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {

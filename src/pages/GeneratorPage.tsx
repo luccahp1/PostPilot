@@ -148,6 +148,9 @@ export default function GeneratorPage() {
       const now = new Date()
       const monthYear = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
+      // Get current user for product images
+      const { data: { user } } = await supabase.auth.getUser()
+
       const { data, error } = await supabase.functions.invoke('generate-calendar', {
         body: {
           businessName: profile.business_name,
@@ -166,6 +169,7 @@ export default function GeneratorPage() {
           permanentContext: profile.permanent_context,
           menuItems: profile.menu_items,
           categoryFocus: focusOnCategories && selectedCategories.length > 0 ? selectedCategories : null,
+          userId: user?.id,
         }
       })
 
@@ -200,6 +204,9 @@ export default function GeneratorPage() {
         cta: item.cta,
         canva_prompt: item.canvaPrompt,
         image_ideas: item.imageIdeas || null,
+        product_image_url: item.productImageUrl || null,
+        product_image_id: item.productImageId || null,
+        suggested_product: item.suggestedProduct || null,
       }))
 
       await api.createCalendarItems(calendarItems)

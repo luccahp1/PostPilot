@@ -62,5 +62,8 @@ export interface CalendarItem {
   cta: string
   canva_prompt: string
   image_ideas: string | null
+  product_image_url?: string | null
+  product_image_id?: string | null
+  suggested_product?: string | null
   created_at: string
 }

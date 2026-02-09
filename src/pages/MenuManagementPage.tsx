@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ArrowLeft, Edit2, Save, X, Trash2, Plus, Upload, Download, GripVertical, FolderPlus, Tag } from 'lucide-react'
+import { ArrowLeft, Edit2, Save, X, Trash2, Plus, Upload, Download, GripVertical, FolderPlus, Tag, Images } from 'lucide-react'
+import ProductImageGallery from '@/components/features/ProductImageGallery'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -43,6 +44,7 @@ export default function MenuManagementPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
   const [customCategories, setCustomCategories] = useState<string[]>([])
+  const [viewingImages, setViewingImages] = useState<string | null>(null)
 
   const { data: profile } = useQuery({
     queryKey: ['business-profile'],
@@ -543,6 +545,10 @@ export default function MenuManagementPage() {
                             placeholder="Comma-separated ingredients"
                           />
                         </div>
+                        <div className="space-y-2">
+                          <Label>Product Images</Label>
+                          <ProductImageGallery menuItemId={item.id} productName={editForm.name} />
+                        </div>
                         <div className="flex gap-2">
                           <Button onClick={handleSaveEdit} disabled={!editForm.name.trim()}>
                             <Save className="mr-2 h-4 w-4" />
@@ -581,6 +587,9 @@ export default function MenuManagementPage() {
                           )}
                         </div>
                         <div className="flex gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => setViewingImages(item.id)}>
+                            <Images className="h-4 w-4" />
+                          </Button>
                           <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
                             <Edit2 className="h-4 w-4" />
                           </Button>
@@ -595,6 +604,36 @@ export default function MenuManagementPage() {
               ))
             )}
           </div>
+
+          {/* Image Gallery Modal */}
+          {viewingImages && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <Card className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Images className="h-5 w-5 text-primary" />
+                        Product Images - {allMenuItems.find(i => i.id === viewingImages)?.name}
+                      </CardTitle>
+                      <CardDescription>
+                        Manage product photos for AI-powered content generation
+                      </CardDescription>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setViewingImages(null)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ProductImageGallery 
+                    menuItemId={viewingImages} 
+                    productName={allMenuItems.find(i => i.id === viewingImages)?.name || 'Product'} 
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </div>
     </div>

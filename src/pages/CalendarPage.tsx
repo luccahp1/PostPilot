@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ArrowLeft, Copy, Download, Trash2, Calendar, RefreshCw, Clock, Instagram } from 'lucide-react'
+import { ArrowLeft, Copy, Download, Trash2, Calendar, RefreshCw, Clock, Instagram, Image as ImageIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -10,6 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { api } from '@/lib/api'
 import { downloadCSV, downloadText } from '@/lib/utils'
 import { POST_TYPES } from '@/lib/constants'
+import { supabase } from '@/lib/supabase'
+import { FunctionsHttpError } from '@supabase/supabase-js'
 
 export default function CalendarPage() {
   const { calendarId } = useParams<{ calendarId: string }>()
@@ -308,6 +310,46 @@ export default function CalendarPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Product Image Preview (if AI selected one) */}
+                {item.product_image_url && (
+                  <div className="bg-accent/10 p-4 rounded-lg">
+                    <div className="flex items-start gap-4">
+                      <div className="relative w-32 h-32 rounded-lg overflow-hidden flex-shrink-0 border-2 border-primary">
+                        <img 
+                          src={item.product_image_url} 
+                          alt={item.suggested_product || 'Product'}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <ImageIcon className="h-4 w-4 text-primary" />
+                          <span className="text-sm font-semibold text-primary">AI-Selected Product Image</span>
+                        </div>
+                        {item.suggested_product && (
+                          <p className="text-sm text-muted-foreground mb-2">
+                            <strong>Featured Product:</strong> {item.suggested_product}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          This image was automatically selected based on the post content. Use this image when creating your Instagram post for best results.
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-3"
+                          onClick={() => {
+                            window.open(item.product_image_url!, '_blank')
+                          }}
+                        >
+                          <Download className="mr-2 h-3 w-3" />
+                          Download Image
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <Tabs defaultValue="short">
                   <TabsList className="grid w-full max-w-md grid-cols-2">
                     <TabsTrigger value="short">Short Caption</TabsTrigger>
