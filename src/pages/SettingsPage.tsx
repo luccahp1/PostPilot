@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ArrowLeft, Save } from 'lucide-react'
+import { ArrowLeft, Save, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,7 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox'
 import InstagramAnalyzer from '@/components/features/InstagramAnalyzer'
 import WebsiteAnalyzer from '@/components/features/WebsiteAnalyzer'
+import InstagramConnection from '@/components/features/InstagramConnection'
 import { api } from '@/lib/api'
+import { supabase } from '@/lib/supabase'
+import { FunctionsHttpError } from '@supabase/supabase-js'
 import { BUSINESS_TYPES, BRAND_VIBES, POSTING_FREQUENCIES, getGoalsForBusinessType } from '@/lib/constants'
 
 export default function SettingsPage() {
@@ -358,6 +361,75 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Instagram Auto-Posting */}
+            {profile && (
+              <InstagramConnection
+                profile={profile}
+                onTogglePosting={async (enabled) => {
+                  try {
+                    await api.updateBusinessProfile(profile.id, { instagram_posting_enabled: enabled })
+                    queryClient.invalidateQueries({ queryKey: ['business-profile'] })
+                    toast.success(enabled ? 'Auto-posting enabled!' : 'Auto-posting disabled')
+                  } catch (error: any) {
+                    toast.error(error.message)
+                  }
+                }}
+              />
+            )}
+
+            {/* Brand Hashtag Generator */}
+            {profile && !profile.brand_hashtag && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    Generate Your Brand Hashtag
+                  </CardTitle>
+                  <CardDescription>
+                    Create a unique hashtag that customers can use to share their experience
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    onClick={async () => {
+                      try {
+                        toast.info('Generating brand hashtag...')
+                        const { data, error } = await supabase.functions.invoke('generate-brand-hashtag', {
+                          body: {
+                            businessName: profile.business_name,
+                            businessType: profile.business_type,
+                            productsServices: profile.products_services,
+                          }
+                        })
+
+                        if (error) {
+                          let errorMessage = error.message
+                          if (error instanceof FunctionsHttpError) {
+                            try {
+                              const statusCode = error.context?.status ?? 500
+                              const textContent = await error.context?.text()
+                              errorMessage = `[Code: ${statusCode}] ${textContent || error.message || 'Unknown error'}`
+                            } catch {
+                              errorMessage = `${error.message || 'Failed to read response'}`
+                            }
+                          }
+                          throw new Error(errorMessage)
+                        }
+
+                        queryClient.invalidateQueries({ queryKey: ['business-profile'] })
+                        toast.success(`Brand hashtag created: ${data.brandHashtag}`)
+                      } catch (error: any) {
+                        toast.error(error.message)
+                      }
+                    }}
+                  >
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Generate Brand Hashtag
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Optional Analyzers */}
             <div className="grid md:grid-cols-2 gap-6">

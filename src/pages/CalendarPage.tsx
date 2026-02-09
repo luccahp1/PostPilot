@@ -102,6 +102,66 @@ export default function CalendarPage() {
     }
   }
 
+  const handlePostToInstagram = async (itemId: string) => {
+    if (!profile) return
+
+    if (!profile.instagram_posting_enabled) {
+      toast.error('Instagram posting is not enabled. Please enable it in Settings.')
+      return
+    }
+
+    // Prompt user to upload an image
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (!file) return
+
+      try {
+        toast.info('Uploading image and posting to Instagram...')
+
+        // Upload image to Supabase Storage
+        const fileName = `instagram-post-${Date.now()}-${file.name}`
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('menu-images')
+          .upload(fileName, file, { contentType: file.type })
+
+        if (uploadError) throw uploadError
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('menu-images')
+          .getPublicUrl(fileName)
+
+        // Post to Instagram
+        const { data, error } = await supabase.functions.invoke('post-to-instagram', {
+          body: { calendarItemId: itemId, imageUrl: publicUrl }
+        })
+
+        if (error) {
+          let errorMessage = error.message
+          if (error instanceof FunctionsHttpError) {
+            try {
+              const statusCode = error.context?.status ?? 500
+              const textContent = await error.context?.text()
+              errorMessage = `[Code: ${statusCode}] ${textContent || error.message || 'Unknown error'}`
+            } catch {
+              errorMessage = `${error.message || 'Failed to read response'}`
+            }
+          }
+          throw new Error(errorMessage)
+        }
+
+        toast.success(data.message || 'Posted to Instagram successfully!')
+      } catch (error: any) {
+        console.error('Instagram posting error:', error)
+        toast.error(error.message || 'Failed to post to Instagram')
+      }
+    }
+    input.click()
+  }
+
   if (!calendar || !profile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -175,14 +235,26 @@ export default function CalendarPage() {
                       </p>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRegenerateDay(item.id)}
-                    disabled={regeneratingId === item.id}
-                  >
-                    <RefreshCw className={`h-4 w-4 ${regeneratingId === item.id ? 'animate-spin' : ''}`} />
-                  </Button>
+                  <div className="flex gap-2">
+                    {profile.instagram_posting_enabled && (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => handlePostToInstagram(item.id)}
+                      >
+                        <Instagram className="mr-2 h-4 w-4" />
+                        Post to Instagram
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRegenerateDay(item.id)}
+                      disabled={regeneratingId === item.id}
+                    >
+                      <RefreshCw className={`h-4 w-4 ${regeneratingId === item.id ? 'animate-spin' : ''}`} />
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
