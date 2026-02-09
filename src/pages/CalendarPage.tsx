@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ArrowLeft, Copy, Download, Trash2, Calendar, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Copy, Download, Trash2, Calendar, RefreshCw, Clock, Instagram } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -16,6 +16,7 @@ export default function CalendarPage() {
   const navigate = useNavigate()
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null)
+  const [schedulingId, setSchedulingId] = useState<string | null>(null)
 
   const { data: calendar } = useQuery({
     queryKey: ['calendar', calendarId],
@@ -101,6 +102,47 @@ export default function CalendarPage() {
       setRegeneratingId(null)
     }
   }
+
+  const handleSchedulePost = async (itemId: string) => {
+    const scheduledTime = prompt('Enter scheduled time (e.g., 2024-12-25 14:30)');
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    if (!scheduledTime) return;
+
+    setSchedulingId(itemId);
+    try {
+      const { data, error } = await supabase.functions.invoke('schedule-post', {
+        body: { 
+          calendarItemId: itemId, 
+          scheduledTime: new Date(scheduledTime).toISOString(),
+          timezone,
+          imageUrl: null // Will be uploaded when posting
+        }
+      });
+
+      if (error) {
+        let errorMessage = error.message;
+        if (error instanceof FunctionsHttpError) {
+          try {
+            const statusCode = error.context?.status ?? 500;
+            const textContent = await error.context?.text();
+            errorMessage = `[Code: ${statusCode}] ${textContent || error.message || 'Unknown error'}`;
+          } catch {
+            errorMessage = `${error.message || 'Failed to read response'}`;
+          }
+        }
+        throw new Error(errorMessage);
+      }
+
+      toast.success(data.message || 'Post scheduled!');
+      navigate('/schedule');
+    } catch (error: any) {
+      console.error('Scheduling error:', error);
+      toast.error(error.message || 'Failed to schedule post');
+    } finally {
+      setSchedulingId(null);
+    }
+  };
 
   const handlePostToInstagram = async (itemId: string) => {
     if (!profile) return
@@ -236,6 +278,14 @@ export default function CalendarPage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleSchedulePost(item.id)}
+                      disabled={schedulingId === item.id}
+                    >
+                      <Clock className="h-4 w-4" />
+                    </Button>
                     {profile.instagram_posting_enabled && (
                       <Button
                         variant="default"
@@ -243,7 +293,7 @@ export default function CalendarPage() {
                         onClick={() => handlePostToInstagram(item.id)}
                       >
                         <Instagram className="mr-2 h-4 w-4" />
-                        Post to Instagram
+                        Post Now
                       </Button>
                     )}
                     <Button

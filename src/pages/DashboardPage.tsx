@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Sparkles, Calendar, Plus, Settings, LogOut, BarChart3, CreditCard } from 'lucide-react'
+import { Sparkles, Calendar, Plus, Settings, LogOut, BarChart3, CreditCard, Clock, Hash, Instagram, Image } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { useAuth } from '@/lib/auth'
@@ -94,6 +94,56 @@ export default function DashboardPage() {
                   Generate New Calendar
                 </Button>
               </Link>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/schedule')}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Clock className="h-5 w-5" />
+                Schedule Posts
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">Auto-publish timeline</p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/stories')}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Instagram className="h-5 w-5" />
+                Stories
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">Generate IG Stories</p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/products')}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Image className="h-5 w-5" />
+                Product Gallery
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">Upload product photos</p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/hashtag-analytics')}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Hash className="h-5 w-5" />
+                Hashtag Analytics
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">Optimize hashtags</p>
             </CardContent>
           </Card>
         </div>

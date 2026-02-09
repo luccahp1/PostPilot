@@ -12,6 +12,10 @@ import CalendarPage from '@/pages/CalendarPage'
 import BillingPage from '@/pages/BillingPage'
 import AnalyticsPage from '@/pages/AnalyticsPage'
 import SettingsPage from '@/pages/SettingsPage'
+import SchedulePage from '@/pages/SchedulePage'
+import HashtagAnalyticsPage from '@/pages/HashtagAnalyticsPage'
+import StoriesPage from '@/pages/StoriesPage'
+import ProductGalleryPage from '@/pages/ProductGalleryPage'
 
 function App() {
   const { user, loading } = useAuth()
@@ -38,6 +42,10 @@ function App() {
       <Route path="/billing" element={user ? <BillingPage /> : <Navigate to="/login" />} />
       <Route path="/analytics" element={user ? <AnalyticsPage /> : <Navigate to="/login" />} />
       <Route path="/settings" element={user ? <SettingsPage /> : <Navigate to="/login" />} />
+      <Route path="/schedule" element={user ? <SchedulePage /> : <Navigate to="/login" />} />
+      <Route path="/hashtag-analytics" element={user ? <HashtagAnalyticsPage /> : <Navigate to="/login" />} />
+      <Route path="/stories" element={user ? <StoriesPage /> : <Navigate to="/login" />} />
+      <Route path="/products" element={user ? <ProductGalleryPage /> : <Navigate to="/login" />} />
     </Routes>
   )
 }
