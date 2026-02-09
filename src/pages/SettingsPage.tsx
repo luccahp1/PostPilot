@@ -10,8 +10,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
+import InstagramAnalyzer from '@/components/features/InstagramAnalyzer'
+import WebsiteAnalyzer from '@/components/features/WebsiteAnalyzer'
 import { api } from '@/lib/api'
-import { BUSINESS_TYPES, BRAND_VIBES, PRIMARY_GOALS, POSTING_FREQUENCIES } from '@/lib/constants'
+import { BUSINESS_TYPES, BRAND_VIBES, POSTING_FREQUENCIES, getGoalsForBusinessType } from '@/lib/constants'
 
 export default function SettingsPage() {
   const navigate = useNavigate()
@@ -37,6 +39,9 @@ export default function SettingsPage() {
     productsServices: profile?.products_services || '',
     permanentContext: profile?.permanent_context || '',
   })
+
+  // Get available goals based on selected business type
+  const availableGoals = formData.businessType ? getGoalsForBusinessType(formData.businessType) : []
 
   // Update form when profile loads
   useEffect(() => {
@@ -304,7 +309,7 @@ export default function SettingsPage() {
                 <div className="space-y-2">
                   <Label>Primary Goals (Select all that apply)</Label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {PRIMARY_GOALS.map((goal) => (
+                    {availableGoals.map((goal) => (
                       <label
                         key={goal.value}
                         className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
@@ -353,6 +358,12 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Optional Analyzers */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <InstagramAnalyzer instagramHandle={formData.instagramHandle} />
+              <WebsiteAnalyzer websiteUrl={formData.websiteUrl} />
+            </div>
 
             <div className="flex gap-4">
               <Button type="submit" size="lg" disabled={loading}>

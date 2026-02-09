@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -10,7 +11,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { api } from '@/lib/api'
-import { BUSINESS_TYPES, BRAND_VIBES, PRIMARY_GOALS, POSTING_FREQUENCIES } from '@/lib/constants'
+import { BUSINESS_TYPES, BRAND_VIBES, POSTING_FREQUENCIES, getGoalsForBusinessType } from '@/lib/constants'
 
 export default function OnboardingPage() {
   const navigate = useNavigate()
@@ -26,6 +27,9 @@ export default function OnboardingPage() {
     postingFrequency: 'daily',
     primaryGoal: [] as string[],
   })
+
+  // Get available goals based on selected business type
+  const availableGoals = formData.businessType ? getGoalsForBusinessType(formData.businessType) : []
 
   const { data: profile } = useQuery({
     queryKey: ['business-profile'],
@@ -227,8 +231,12 @@ export default function OnboardingPage() {
 
             <div className="space-y-2">
               <Label>Primary Goals (Select all that apply)</Label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {PRIMARY_GOALS.map((goal) => (
+              {!formData.businessType && (
+                <p className="text-sm text-muted-foreground">Select a business type first to see relevant goals</p>
+              )}
+              {formData.businessType && availableGoals.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {availableGoals.map((goal) => (
                   <label
                     key={goal.value}
                     className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
@@ -246,8 +254,9 @@ export default function OnboardingPage() {
                       <span className="font-medium text-sm">{goal.label}</span>
                     </div>
                   </label>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <Button type="submit" className="w-full" size="lg" disabled={loading}>

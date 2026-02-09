@@ -42,6 +42,39 @@ export const PRIMARY_GOALS = [
   { value: 'brand-awareness', label: 'Build Brand Awareness', emoji: '🎯' },
 ]
 
+// Dynamic goals based on business type
+export const BUSINESS_TYPE_GOALS: Record<string, string[]> = {
+  'Coffee Shop': ['foot-traffic', 'online-orders', 'followers', 'brand-awareness'],
+  'Cafe': ['foot-traffic', 'online-orders', 'followers', 'brand-awareness'],
+  'Bakery': ['foot-traffic', 'online-orders', 'followers', 'brand-awareness'],
+  'Restaurant': ['bookings', 'foot-traffic', 'online-orders', 'followers', 'brand-awareness'],
+  'Boutique / Retail': ['foot-traffic', 'online-orders', 'followers', 'brand-awareness'],
+  'Barber Shop': ['bookings', 'calls', 'followers', 'brand-awareness'],
+  'Hair Salon': ['bookings', 'calls', 'followers', 'brand-awareness'],
+  'Nail Salon': ['bookings', 'calls', 'followers', 'brand-awareness'],
+  'Beauty Spa': ['bookings', 'calls', 'followers', 'brand-awareness'],
+  'Massage Therapy': ['bookings', 'calls', 'followers', 'brand-awareness'],
+  'Gym / Fitness Studio': ['bookings', 'calls', 'followers', 'brand-awareness'],
+  'Yoga Studio': ['bookings', 'followers', 'brand-awareness'],
+  'Personal Trainer': ['bookings', 'calls', 'followers', 'brand-awareness'],
+  'Dentist': ['bookings', 'calls', 'brand-awareness'],
+  'Chiropractor': ['bookings', 'calls', 'brand-awareness'],
+  'Real Estate Agent': ['calls', 'followers', 'brand-awareness'],
+  'Interior Designer': ['bookings', 'calls', 'followers', 'brand-awareness'],
+  'Photographer': ['bookings', 'calls', 'followers', 'brand-awareness'],
+  'Florist': ['calls', 'online-orders', 'followers', 'brand-awareness'],
+  'Pet Grooming': ['bookings', 'calls', 'followers', 'brand-awareness'],
+  'Auto Repair': ['bookings', 'calls', 'brand-awareness'],
+  'Tattoo Studio': ['bookings', 'calls', 'followers', 'brand-awareness'],
+  'Other': ['bookings', 'foot-traffic', 'calls', 'online-orders', 'followers', 'brand-awareness'], // Show all for Other
+}
+
+// Helper function to get goals for a business type
+export function getGoalsForBusinessType(businessType: string): typeof PRIMARY_GOALS {
+  const allowedGoalValues = BUSINESS_TYPE_GOALS[businessType] || BUSINESS_TYPE_GOALS['Other']
+  return PRIMARY_GOALS.filter(goal => allowedGoalValues.includes(goal.value))
+}
+
 export const POSTING_FREQUENCIES = [
   { value: '3x-week', label: '3x per week' },
   { value: '5x-week', label: '5x per week' },

@@ -70,24 +70,46 @@ export default function GeneratorPage() {
     setUploadingMenu(true)
 
     try {
-      // TODO: Implement AI menu scanning with OnSpace AI vision model
-      // For now, we'll show a placeholder flow
       toast.info('Analyzing menu...')
       
-      // Simulated delay for AI processing
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Upload image to Supabase Storage
+      const fileName = `menu-${Date.now()}-${file.name}`
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('menu-images')
+        .upload(fileName, file, { contentType: file.type })
       
-      // Mock parsed menu items
-      const parsedItems: MenuItem[] = [
-        { id: Date.now().toString(), name: 'Example Item 1', description: '', price: '$12.99', category: 'Main' },
-        { id: (Date.now() + 1).toString(), name: 'Example Item 2', description: '', price: '$8.99', category: 'Sides' },
-      ]
+      if (uploadError) throw uploadError
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('menu-images')
+        .getPublicUrl(fileName)
+
+      // Call AI menu analysis function
+      const { data, error } = await supabase.functions.invoke('analyze-menu-image', {
+        body: { imageUrl: publicUrl }
+      })
+
+      if (error) {
+        let errorMessage = error.message
+        if (error instanceof FunctionsHttpError) {
+          try {
+            const statusCode = error.context?.status ?? 500
+            const textContent = await error.context?.text()
+            errorMessage = `[Code: ${statusCode}] ${textContent || error.message || 'Unknown error'}`
+          } catch {
+            errorMessage = `${error.message || 'Failed to read response'}`
+          }
+        }
+        throw new Error(errorMessage)
+      }
       
-      setMenuItems([...menuItems, ...parsedItems])
+      setMenuItems([...menuItems, ...data.items])
       setShowMenuEditor(true)
       toast.success('Menu scanned! Please verify the items below')
     } catch (error: any) {
-      toast.error('Failed to scan menu')
+      console.error('Menu scan error:', error)
+      toast.error(error.message || 'Failed to scan menu')
     } finally {
       setUploadingMenu(false)
     }

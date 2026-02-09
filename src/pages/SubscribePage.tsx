@@ -25,11 +25,18 @@ export default function SubscribePage() {
   }, [profile, navigate])
 
   const handleSubscribe = async () => {
+    if (!profile) {
+      toast.error('Please complete your business profile first')
+      navigate('/onboarding')
+      return
+    }
+
     setLoading(true)
 
     try {
-      const priceId = import.meta.env.VITE_STRIPE_PRICE_ID || 'price_1234567890'
-      const successUrl = `${window.location.origin}/dashboard`
+      // Use test price ID - in production, replace with actual Stripe price ID
+      const priceId = import.meta.env.VITE_STRIPE_PRICE_ID || 'price_1QsABUP1vW7I7gxdGj58VSXY' // Replace with your actual Stripe price ID
+      const successUrl = `${window.location.origin}/generator`
       const cancelUrl = `${window.location.origin}/subscribe`
 
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
