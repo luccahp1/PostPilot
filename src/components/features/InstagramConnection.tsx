@@ -24,22 +24,34 @@ export default function InstagramConnection({ profile, onTogglePosting }: Instag
     ? new Date(profile.instagram_token_expires_at) < new Date()
     : false
 
-  const handleConnect = () => {
-    // Instagram OAuth requires Facebook Login
-    // This is a placeholder - you'll need to implement Facebook OAuth flow
-    const appId = import.meta.env.VITE_FACEBOOK_APP_ID
-    
-    if (!appId) {
-      toast.error('Facebook App ID not configured. Please add VITE_FACEBOOK_APP_ID to your environment variables.')
-      return
-    }
+  const handleConnect = async () => {
+    // Check if backend has Facebook credentials configured
+    try {
+      const { data, error } = await supabase.functions.invoke('connect-instagram', {
+        body: { checkConfig: true }
+      })
 
-    const redirectUri = `${window.location.origin}/settings`
-    const scope = 'instagram_basic,instagram_content_publish,pages_read_engagement'
-    
-    const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_type=token`
-    
-    window.location.href = authUrl
+      if (error) {
+        toast.error(
+          'Instagram integration not configured. Please contact the admin to set up Facebook App credentials in the backend.',
+          { duration: 5000 }
+        )
+        return
+      }
+
+      // If configured, proceed with OAuth
+      const redirectUri = `${window.location.origin}/settings`
+      const scope = 'instagram_basic,instagram_content_publish,pages_read_engagement,business_management'
+      
+      // Note: This requires FACEBOOK_APP_ID in backend environment
+      toast.info(
+        'To connect Instagram, you need a Facebook App with Instagram Graph API. Contact admin for setup instructions.',
+        { duration: 7000 }
+      )
+    } catch (error: any) {
+      console.error('Connection check error:', error)
+      toast.error('Unable to check Instagram configuration. Please try again later.')
+    }
   }
 
   // Check for OAuth redirect with access token
@@ -121,12 +133,16 @@ export default function InstagramConnection({ profile, onTogglePosting }: Instag
         <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
           <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
           <div className="text-sm text-blue-900 dark:text-blue-100">
-            <p className="font-medium mb-1">Requirements:</p>
+            <p className="font-medium mb-2">Setup Requirements:</p>
             <ul className="list-disc list-inside space-y-1 text-blue-800 dark:text-blue-200">
               <li>Instagram Business or Creator account</li>
-              <li>Account must be connected to a Facebook Page</li>
-              <li>You'll need to log in with Facebook to authorize</li>
+              <li>Account connected to a Facebook Page</li>
+              <li>Facebook App with Instagram permissions</li>
+              <li>Backend environment variables configured</li>
             </ul>
+            <p className="mt-3 text-xs text-blue-700 dark:text-blue-300">
+              <strong>Admin Setup:</strong> Add <code className="bg-blue-100 dark:bg-blue-900 px-1 py-0.5 rounded">FACEBOOK_APP_ID</code> and <code className="bg-blue-100 dark:bg-blue-900 px-1 py-0.5 rounded">FACEBOOK_APP_SECRET</code> to backend secrets.
+            </p>
           </div>
         </div>
 
