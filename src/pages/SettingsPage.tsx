@@ -282,8 +282,9 @@ export default function SettingsPage() {
                   <Label>Brand Vibe (Choose 1-3)</Label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {BRAND_VIBES.map((vibe) => (
-                      <label
+                      <div
                         key={vibe.value}
+                        onClick={() => toggleBrandVibe(vibe.value)}
                         className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
                           formData.brandVibe.includes(vibe.value)
                             ? 'border-primary bg-primary/5'
@@ -298,7 +299,7 @@ export default function SettingsPage() {
                           <span className="text-xl">{vibe.emoji}</span>
                           <span className="font-medium">{vibe.label}</span>
                         </div>
-                      </label>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -325,8 +326,9 @@ export default function SettingsPage() {
                   <Label>Primary Goals (Select all that apply)</Label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {availableGoals.map((goal) => (
-                      <label
+                      <div
                         key={goal.value}
+                        onClick={() => togglePrimaryGoal(goal.value)}
                         className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
                           formData.primaryGoal.includes(goal.value)
                             ? 'border-primary bg-primary/5'
@@ -341,7 +343,7 @@ export default function SettingsPage() {
                           <span className="text-xl">{goal.emoji}</span>
                           <span className="font-medium text-sm">{goal.label}</span>
                         </div>
-                      </label>
+                      </div>
                     ))}
                   </div>
                 </div>
