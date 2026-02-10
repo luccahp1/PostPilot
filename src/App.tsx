@@ -19,6 +19,7 @@ import ProductGalleryPage from '@/pages/ProductGalleryPage'
 import MenuManagementPage from '@/pages/MenuManagementPage'
 import CSVDocumentationPage from '@/pages/CSVDocumentationPage'
 import MenuAnalyticsPage from '@/pages/MenuAnalyticsPage'
+import InstagramSetupGuidePage from '@/pages/InstagramSetupGuidePage'
 
 function App() {
   const { user, loading } = useAuth()
@@ -52,6 +53,7 @@ function App() {
       <Route path="/menu-management" element={user ? <MenuManagementPage /> : <Navigate to="/login" />} />
       <Route path="/csv-docs" element={user ? <CSVDocumentationPage /> : <Navigate to="/login" />} />
       <Route path="/menu-analytics" element={user ? <MenuAnalyticsPage /> : <Navigate to="/login" />} />
+      <Route path="/instagram-setup-guide" element={user ? <InstagramSetupGuidePage /> : <Navigate to="/login" />} />
     </Routes>
   )
 }

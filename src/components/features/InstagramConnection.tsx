@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Instagram, Link2, CheckCircle2, AlertCircle, Info } from 'lucide-react'
+import { Instagram, Link2, CheckCircle2, AlertCircle, Info, BookOpen } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -140,7 +141,7 @@ export default function InstagramConnection({ profile, onTogglePosting }: Instag
       <CardContent className="space-y-4">
         <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
           <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-          <div className="text-sm text-blue-900 dark:text-blue-100">
+          <div className="text-sm text-blue-900 dark:text-blue-100 flex-1">
             <p className="font-medium mb-2">Setup Requirements:</p>
             <ul className="list-disc list-inside space-y-1 text-blue-800 dark:text-blue-200">
               <li>Instagram Business or Creator account</li>
@@ -152,6 +153,10 @@ export default function InstagramConnection({ profile, onTogglePosting }: Instag
                 <strong>⚠️ Configuration Required:</strong> Facebook App credentials are not configured. Please contact support.
               </p>
             )}
+            <Link to="/instagram-setup-guide" className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline text-sm font-medium mt-3">
+              <BookOpen className="h-4 w-4" />
+              View Step-by-Step Setup Guide
+            </Link>
           </div>
         </div>
 
