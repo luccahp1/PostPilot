@@ -201,7 +201,8 @@ export default function OnboardingPage() {
                   >
                     <Checkbox
                       checked={formData.brandVibe.includes(vibe.value)}
-                      onCheckedChange={(e) => e.preventDefault()}
+                      onCheckedChange={() => toggleBrandVibe(vibe.value)}
+                      onClick={(e) => e.stopPropagation()}
                     />
                     <div className="flex items-center gap-2">
                       <span className="text-xl">{vibe.emoji}</span>
