@@ -24,6 +24,33 @@ import InstagramSetupGuidePage from '@/pages/InstagramSetupGuidePage'
 function App() {
   const { user, loading } = useAuth()
 
+  // Check if environment variables are configured
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="max-w-md w-full space-y-4 text-center">
+          <div className="bg-destructive/10 border border-destructive rounded-lg p-6 space-y-3">
+            <h1 className="text-2xl font-bold text-destructive">Configuration Error</h1>
+            <p className="text-sm text-muted-foreground">
+              Supabase environment variables are not configured. The application cannot connect to the backend.
+            </p>
+            <div className="text-left bg-background rounded p-3 text-xs font-mono">
+              <p className="text-muted-foreground mb-2">Missing variables:</p>
+              {!supabaseUrl && <p className="text-destructive">• VITE_SUPABASE_URL</p>}
+              {!supabaseAnonKey && <p className="text-destructive">• VITE_SUPABASE_ANON_KEY</p>}
+            </div>
+            <p className="text-xs text-muted-foreground mt-4">
+              These should be automatically configured by OnSpace Cloud.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">

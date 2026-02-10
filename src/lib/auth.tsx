@@ -34,8 +34,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true
 
+    // Check if Supabase is properly configured
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('Supabase environment variables are missing')
+      if (mounted) setLoading(false)
+      return
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (mounted && session?.user) setUser(mapSupabaseUser(session.user))
+      if (mounted) setLoading(false)
+    }).catch((error) => {
+      console.error('Failed to get session:', error)
       if (mounted) setLoading(false)
     })
 
