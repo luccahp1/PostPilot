@@ -7,6 +7,33 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const body = await req.json()
+    
+    // Handle config check request
+    if (body.checkConfig) {
+      const appId = Deno.env.get('FACEBOOK_APP_ID')
+      const appSecret = Deno.env.get('FACEBOOK_APP_SECRET')
+      
+      if (!appId || !appSecret) {
+        return new Response(
+          JSON.stringify({ 
+            configured: false,
+            error: 'Facebook App credentials not configured in backend' 
+          }),
+          { 
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        )
+      }
+      
+      return new Response(
+        JSON.stringify({ configured: true, appId }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Handle OAuth callback with authorization code
     const authHeader = req.headers.get('Authorization')
     const token = authHeader?.replace('Bearer ', '')
     
@@ -20,21 +47,45 @@ Deno.serve(async (req) => {
       throw new Error('Unauthorized')
     }
 
-    const { accessToken } = await req.json()
+    const { code, redirectUri } = body
 
-    if (!accessToken) {
-      throw new Error('Access token is required')
+    if (!code) {
+      throw new Error('Authorization code is required')
     }
 
-    console.log('Connecting Instagram account...')
+    console.log('Exchanging authorization code for access token...')
 
-    // Exchange short-lived token for long-lived token
+    // Exchange authorization code for access token
+    const appId = Deno.env.get('FACEBOOK_APP_ID')
+    const appSecret = Deno.env.get('FACEBOOK_APP_SECRET')
+
+    const tokenResponse = await fetch(
+      `https://graph.facebook.com/v18.0/oauth/access_token?` +
+      `client_id=${appId}&` +
+      `client_secret=${appSecret}&` +
+      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+      `code=${code}`
+    )
+
+    if (!tokenResponse.ok) {
+      const errorData = await tokenResponse.json()
+      throw new Error(`Facebook: ${errorData.error?.message || 'Failed to get access token'}`)
+    }
+
+    const { access_token: shortLivedToken } = await tokenResponse.json()
+
+    // Exchange short-lived token for long-lived token (60 days)
     const longLivedResponse = await fetch(
-      `https://graph.facebook.com/v18.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${Deno.env.get('FACEBOOK_APP_ID')}&client_secret=${Deno.env.get('FACEBOOK_APP_SECRET')}&fb_exchange_token=${accessToken}`
+      `https://graph.facebook.com/v18.0/oauth/access_token?` +
+      `grant_type=fb_exchange_token&` +
+      `client_id=${appId}&` +
+      `client_secret=${appSecret}&` +
+      `fb_exchange_token=${shortLivedToken}`
     )
 
     if (!longLivedResponse.ok) {
-      throw new Error('Failed to exchange token for long-lived token')
+      const errorData = await longLivedResponse.json()
+      throw new Error(`Facebook: ${errorData.error?.message || 'Failed to exchange token'}`)
     }
 
     const { access_token: longLivedToken, expires_in } = await longLivedResponse.json()
@@ -45,13 +96,14 @@ Deno.serve(async (req) => {
     )
 
     if (!accountsResponse.ok) {
-      throw new Error('Failed to get Facebook pages')
+      const errorData = await accountsResponse.json()
+      throw new Error(`Facebook: ${errorData.error?.message || 'Failed to get pages'}`)
     }
 
     const accountsData = await accountsResponse.json()
     
     if (!accountsData.data || accountsData.data.length === 0) {
-      throw new Error('No Facebook pages found. Please connect your Instagram Business Account to a Facebook Page.')
+      throw new Error('No Facebook pages found. Connect your Instagram Business Account to a Facebook Page first.')
     }
 
     // Get the first page's Instagram Business Account
@@ -63,13 +115,14 @@ Deno.serve(async (req) => {
     )
 
     if (!igResponse.ok) {
-      throw new Error('Failed to get Instagram Business Account')
+      const errorData = await igResponse.json()
+      throw new Error(`Facebook: ${errorData.error?.message || 'Failed to get Instagram account'}`)
     }
 
     const igData = await igResponse.json()
 
     if (!igData.instagram_business_account) {
-      throw new Error('No Instagram Business Account connected to this Facebook Page')
+      throw new Error('No Instagram Business Account linked to this Facebook Page. Link them in your Instagram app settings.')
     }
 
     const instagramUserId = igData.instagram_business_account.id

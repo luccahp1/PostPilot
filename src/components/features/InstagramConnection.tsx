@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Instagram, Link2, CheckCircle2, AlertCircle, Info } from 'lucide-react'
@@ -18,63 +18,71 @@ interface InstagramConnectionProps {
 export default function InstagramConnection({ profile, onTogglePosting }: InstagramConnectionProps) {
   const queryClient = useQueryClient()
   const [connecting, setConnecting] = useState(false)
+  const [appId, setAppId] = useState<string | null>(null)
 
   const isConnected = !!profile.instagram_access_token
   const isExpired = profile.instagram_token_expires_at 
     ? new Date(profile.instagram_token_expires_at) < new Date()
     : false
 
-  const handleConnect = async () => {
-    // Check if backend has Facebook credentials configured
-    try {
-      const { data, error } = await supabase.functions.invoke('connect-instagram', {
-        body: { checkConfig: true }
-      })
-
-      if (error) {
-        toast.error(
-          'Instagram integration not configured. Please contact the admin to set up Facebook App credentials in the backend.',
-          { duration: 5000 }
-        )
-        return
+  // Check if backend has Facebook credentials configured on mount
+  useEffect(() => {
+    const checkConfig = async () => {
+      try {
+        const { data } = await supabase.functions.invoke('connect-instagram', {
+          body: { checkConfig: true }
+        })
+        if (data?.configured && data?.appId) {
+          setAppId(data.appId)
+        }
+      } catch (error) {
+        console.error('Config check failed:', error)
       }
-
-      // If configured, proceed with OAuth
-      const redirectUri = `${window.location.origin}/settings`
-      const scope = 'instagram_basic,instagram_content_publish,pages_read_engagement,business_management'
-      
-      // Note: This requires FACEBOOK_APP_ID in backend environment
-      toast.info(
-        'To connect Instagram, you need a Facebook App with Instagram Graph API. Contact admin for setup instructions.',
-        { duration: 7000 }
-      )
-    } catch (error: any) {
-      console.error('Connection check error:', error)
-      toast.error('Unable to check Instagram configuration. Please try again later.')
     }
+    checkConfig()
+  }, [])
+
+  const handleConnect = async () => {
+    if (!appId) {
+      toast.error(
+        'Instagram integration not configured. Facebook App credentials are missing.',
+        { duration: 5000 }
+      )
+      return
+    }
+
+    // Redirect to Facebook OAuth
+    const redirectUri = `${window.location.origin}/settings`
+    const scope = 'instagram_basic,instagram_content_publish,pages_read_engagement,business_management'
+    
+    const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?` +
+      `client_id=${appId}&` +
+      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+      `scope=${scope}&` +
+      `response_type=code&` +
+      `state=${Date.now()}`
+
+    window.location.href = authUrl
   }
 
-  // Check for OAuth redirect with access token
-  useState(() => {
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash
-      if (hash.includes('access_token')) {
-        const params = new URLSearchParams(hash.substring(1))
-        const accessToken = params.get('access_token')
-        
-        if (accessToken) {
-          handleOAuthCallback(accessToken)
-        }
-      }
+  // Check for OAuth redirect with authorization code
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const code = urlParams.get('code')
+    
+    if (code) {
+      handleOAuthCallback(code)
     }
-  })
+  }, [])
 
-  const handleOAuthCallback = async (accessToken: string) => {
+  const handleOAuthCallback = async (code: string) => {
     setConnecting(true)
     
     try {
+      const redirectUri = `${window.location.origin}/settings`
+
       const { data, error } = await supabase.functions.invoke('connect-instagram', {
-        body: { accessToken }
+        body: { code, redirectUri }
       })
 
       if (error) {
@@ -92,9 +100,9 @@ export default function InstagramConnection({ profile, onTogglePosting }: Instag
       }
 
       queryClient.invalidateQueries({ queryKey: ['business-profile'] })
-      toast.success('Instagram account connected!')
+      toast.success('Instagram account connected successfully!')
       
-      // Clear the hash from URL
+      // Clear the code from URL
       window.history.replaceState(null, '', window.location.pathname)
     } catch (error: any) {
       console.error('Instagram connection error:', error)
@@ -137,19 +145,20 @@ export default function InstagramConnection({ profile, onTogglePosting }: Instag
             <ul className="list-disc list-inside space-y-1 text-blue-800 dark:text-blue-200">
               <li>Instagram Business or Creator account</li>
               <li>Account connected to a Facebook Page</li>
-              <li>Facebook App with Instagram permissions</li>
-              <li>Backend environment variables configured</li>
+              <li>Link Instagram to Page in Instagram app settings</li>
             </ul>
-            <p className="mt-3 text-xs text-blue-700 dark:text-blue-300">
-              <strong>Admin Setup:</strong> Add <code className="bg-blue-100 dark:bg-blue-900 px-1 py-0.5 rounded">FACEBOOK_APP_ID</code> and <code className="bg-blue-100 dark:bg-blue-900 px-1 py-0.5 rounded">FACEBOOK_APP_SECRET</code> to backend secrets.
-            </p>
+            {!appId && (
+              <p className="mt-3 text-xs text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900 p-2 rounded">
+                <strong>⚠️ Configuration Required:</strong> Facebook App credentials are not configured. Please contact support.
+              </p>
+            )}
           </div>
         </div>
 
         {!isConnected ? (
-          <Button onClick={handleConnect} disabled={connecting} className="w-full">
+          <Button onClick={handleConnect} disabled={connecting || !appId} className="w-full">
             <Link2 className="mr-2 h-4 w-4" />
-            {connecting ? 'Connecting...' : 'Connect Instagram Account'}
+            {connecting ? 'Connecting...' : !appId ? 'Configuration Required' : 'Connect Instagram Account'}
           </Button>
         ) : (
           <div className="space-y-3">
