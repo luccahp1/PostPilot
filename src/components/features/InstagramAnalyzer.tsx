@@ -43,7 +43,7 @@ export default function InstagramAnalyzer({ instagramHandle, onAnalysisComplete 
       }
 
       setAnalyzed(true)
-      toast.success(data.message || 'Instagram feed analyzed successfully!')
+      toast.success('Instagram feed analyzed! Recommendations saved to your profile.')
       onAnalysisComplete?.()
     } catch (error: any) {
       console.error('Instagram analysis error:', error)
