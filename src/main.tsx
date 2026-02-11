@@ -10,7 +10,6 @@ import './index.css'
 import React from "react";
 console.log("React version:", React.version);
 
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
