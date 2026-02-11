@@ -7,10 +7,6 @@ import { AuthProvider } from '@/lib/auth'
 import App from './App'
 import './index.css'
 
-import React from "react";
-console.log("React version:", React.version);
-
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -21,14 +17,13 @@ const queryClient = new QueryClient({
 })
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          <App />
-          <Toaster position="top-center" richColors />
-        </AuthProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
-  </StrictMode>
+  <QueryClientProvider client={queryClient}>
+    <BrowserRouter>
+      <AuthProvider>
+        <App />
+        <Toaster position="top-center" richColors />
+      </AuthProvider>
+    </BrowserRouter>
+  </QueryClientProvider>
 )
+

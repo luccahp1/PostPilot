@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { api } from '@/lib/api'
 import { BUSINESS_TYPES, BRAND_VIBES, POSTING_FREQUENCIES, getGoalsForBusinessType } from '@/lib/constants'
@@ -121,20 +120,18 @@ export default function OnboardingPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="businessType">Business Type</Label>
-                <Select
+                <select
+                  id="businessType"
                   value={formData.businessType}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, businessType: value }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, businessType: e.target.value }))}
                   required
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
-                  <SelectTrigger id="businessType">
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {BUSINESS_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>{type}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <option value="" disabled>Select type</option>
+                  {BUSINESS_TYPES.map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="space-y-2">
@@ -187,7 +184,9 @@ export default function OnboardingPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Brand Vibe (Choose 1-3)</Label>
+              <p className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Brand Vibe (Choose 1-3)
+              </p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {BRAND_VIBES.map((vibe) => (
                   <div
@@ -215,24 +214,23 @@ export default function OnboardingPage() {
 
             <div className="space-y-2">
               <Label htmlFor="postingFrequency">Posting Frequency</Label>
-              <Select
+              <select
+                id="postingFrequency"
                 value={formData.postingFrequency}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, postingFrequency: value }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, postingFrequency: e.target.value }))}
                 required
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
-                <SelectTrigger id="postingFrequency">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {POSTING_FREQUENCIES.map((freq) => (
-                    <SelectItem key={freq.value} value={freq.value}>{freq.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {POSTING_FREQUENCIES.map((freq) => (
+                  <option key={freq.value} value={freq.value}>{freq.label}</option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-2">
-              <Label>Primary Goals (Select all that apply)</Label>
+              <p className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Primary Goals (Select all that apply)
+              </p>
               {!formData.businessType && (
                 <p className="text-sm text-muted-foreground">Select a business type first to see relevant goals</p>
               )}
