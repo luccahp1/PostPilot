@@ -24,7 +24,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Sparkles className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl">PostPilot</span>
+            <span className="font-bold text-xl">Neighborhood Social</span>
           </div>
           <div className="flex items-center gap-4">
             {user ? (
@@ -89,7 +89,7 @@ export default function LandingPage() {
             <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-3xl blur-3xl"></div>
             <img 
               src={heroImage} 
-              alt="PostPilot Dashboard" 
+              alt="Neighborhood Social Dashboard" 
               className="relative rounded-2xl shadow-2xl w-full"
             />
           </div>
@@ -211,10 +211,10 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 text-center text-muted-foreground">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Sparkles className="h-5 w-5 text-primary" />
-            <span className="font-bold text-foreground">PostPilot</span>
+            <span className="font-bold text-foreground">Neighborhood Social</span>
           </div>
           <p className="text-sm">
-            © 2026 PostPilot. Your social media manager—without the manager.
+            © 2026 Neighborhood Social. Your social media manager—without the manager.
           </p>
         </div>
       </footer>

@@ -178,7 +178,7 @@ export default function InstagramConnection({ profile, onTogglePosting }: Instag
             <div className="flex items-center justify-between p-3 border rounded-lg">
               <div>
                 <Label className="text-base font-medium">Enable Auto-Posting</Label>
-                <p className="text-sm text-muted-foreground">Allow PostPilot to post to Instagram</p>
+                <p className="text-sm text-muted-foreground">Allow Neighborhood Social to post to Instagram</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input

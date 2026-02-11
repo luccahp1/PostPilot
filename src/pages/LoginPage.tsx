@@ -61,7 +61,7 @@ export default function LoginPage() {
               <Sparkles className="h-8 w-8 text-primary" />
             </div>
             <CardTitle>Welcome Back</CardTitle>
-            <CardDescription>Sign in to your PostPilot account</CardDescription>
+            <CardDescription>Sign in to your Neighborhood Social account</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">

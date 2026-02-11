@@ -80,7 +80,7 @@ export default function BillingPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>Current Plan</CardTitle>
-                    <CardDescription>PostPilot Pro</CardDescription>
+                    <CardDescription>Neighborhood Social Pro</CardDescription>
                   </div>
                   <Badge variant={profile.subscription_status === 'active' ? 'default' : 'secondary'}>
                     {profile.subscription_status}

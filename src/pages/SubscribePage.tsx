@@ -94,7 +94,7 @@ export default function SubscribePage() {
               <span className="text-5xl font-bold">$30</span>
               <span className="text-xl text-muted-foreground">/month</span>
             </div>
-            <CardTitle>PostPilot Pro</CardTitle>
+            <CardTitle>Neighborhood Social Pro</CardTitle>
             <CardDescription>Everything you need to succeed on Instagram</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">

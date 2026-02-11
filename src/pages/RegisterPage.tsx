@@ -132,7 +132,7 @@ export default function RegisterPage() {
               {step === 'password' && 'Create Password'}
             </CardTitle>
             <CardDescription>
-              {step === 'email' && 'Create your PostPilot account in seconds'}
+              {step === 'email' && 'Create your Neighborhood Social account in seconds'}
               {step === 'verification' && 'Enter the 4-digit code sent to your email'}
               {step === 'password' && 'Set a password to secure your account'}
             </CardDescription>

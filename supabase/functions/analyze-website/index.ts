@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     // Fetch the website HTML
     const websiteResponse = await fetch(websiteUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; PostPilot/1.0; +https://postpilot.app)'
+        'User-Agent': 'Mozilla/5.0 (compatible; Neighborhood Social/1.0; +https://neighborhoodsocial.app)'
       }
     })
 
