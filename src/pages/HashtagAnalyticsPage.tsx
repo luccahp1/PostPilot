@@ -28,12 +28,36 @@ export default function HashtagAnalyticsPage() {
     }
   })
 
+  const { data: profile } = useQuery({
+    queryKey: ['business-profile'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('business_profiles')
+        .select('*')
+        .single()
+
+      if (error && error.code !== 'PGRST116') throw error
+      return data
+    }
+  })
+
   const handleAnalyzeHashtag = async (hashtag: string) => {
+    if (!profile) {
+      toast.error('Please complete your business profile first')
+      return
+    }
+
     setAnalyzingHashtag(hashtag)
 
     try {
+      // Get all currently tracked hashtags
+      const currentHashtags = hashtags.map((h: any) => h.hashtag)
+      
       const { data, error } = await supabase.functions.invoke('analyze-hashtag-performance', {
-        body: { hashtag }
+        body: { 
+          businessType: profile.business_type,
+          currentHashtags: [...currentHashtags, hashtag]
+        }
       })
 
       if (error) {

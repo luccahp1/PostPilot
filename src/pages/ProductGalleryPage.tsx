@@ -24,17 +24,21 @@ export default function ProductGalleryPage() {
     queryFn: api.getBusinessProfile,
   })
 
-  const { data: productImages = [] } = useQuery({
-    queryKey: ['product-images'],
+  const { data: productImages = [], isLoading } = useQuery({
+    queryKey: ['product-images', profile?.user_id],
     queryFn: async () => {
+      if (!profile?.user_id) return []
+      
       const { data, error } = await supabase
         .from('product_images')
         .select('*')
+        .eq('user_id', profile.user_id)
         .order('created_at', { ascending: false })
 
       if (error) throw error
       return data || []
-    }
+    },
+    enabled: !!profile?.user_id
   })
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,6 +141,14 @@ export default function ProductGalleryPage() {
 
   const menuItems = profile?.menu_items || []
 
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
@@ -238,6 +250,11 @@ export default function ProductGalleryPage() {
           </Card>
 
           {/* Gallery Grid */}
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          ) : productImages.length > 0 ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {productImages.map((image: any) => (
               <Card key={image.id} className="overflow-hidden">
@@ -284,8 +301,7 @@ export default function ProductGalleryPage() {
               </Card>
             ))}
           </div>
-
-          {productImages.length === 0 && (
+          ) : (
             <Card>
               <CardContent className="py-12 text-center text-muted-foreground">
                 No product images yet. Upload your first product photo to get started!

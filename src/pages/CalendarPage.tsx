@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { ArrowLeft, Copy, Download, Trash2, Calendar, RefreshCw, Clock, Instagram, Image as ImageIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,7 @@ import { FunctionsHttpError } from '@supabase/supabase-js'
 export default function CalendarPage() {
   const { calendarId } = useParams<{ calendarId: string }>()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null)
   const [schedulingId, setSchedulingId] = useState<string | null>(null)
@@ -83,7 +84,16 @@ export default function CalendarPage() {
     try {
       await api.deleteCalendar(calendarId!)
       toast.success('Calendar deleted')
+      
+      // Navigate first, then invalidate queries to prevent stale data
       navigate('/dashboard')
+      
+      // Invalidate all calendar-related queries to clear cache
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['calendars'] })
+        queryClient.invalidateQueries({ queryKey: ['calendar', calendarId] })
+        queryClient.invalidateQueries({ queryKey: ['calendar-items', calendarId] })
+      }, 100)
     } catch (error: any) {
       toast.error(error.message)
       setDeletingId(null)
