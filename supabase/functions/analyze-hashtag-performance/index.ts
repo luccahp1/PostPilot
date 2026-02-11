@@ -94,10 +94,63 @@ Return your response as JSON with this structure:
 
     const analysis = JSON.parse(analysisText)
 
-    console.log('Hashtag analysis complete')
+    console.log('Hashtag analysis complete, saving to database...')
+
+    // Save analyzed hashtags to the database
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    // For each suggested hashtag, insert or update analytics
+    for (const hashtag of analysis.suggested) {
+      // Check if hashtag already exists
+      const { data: existing } = await supabaseAdmin
+        .from('hashtag_analytics')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('hashtag', hashtag)
+        .single()
+
+      if (!existing) {
+        // Insert new hashtag with initial performance score
+        const { error: insertError } = await supabaseAdmin
+          .from('hashtag_analytics')
+          .insert({
+            user_id: user.id,
+            hashtag: hashtag,
+            performance_score: 50, // Default middle score for new suggestions
+            impressions: 0,
+            reach: 0,
+            engagement: 0
+          })
+
+        if (insertError) {
+          console.error('Error inserting hashtag:', insertError)
+        }
+      }
+    }
+
+    // Mark underperforming hashtags with lower score
+    for (const hashtag of analysis.underperforming) {
+      const { error: updateError } = await supabaseAdmin
+        .from('hashtag_analytics')
+        .update({ performance_score: 20 }) // Low score for underperforming
+        .eq('user_id', user.id)
+        .eq('hashtag', hashtag)
+
+      if (updateError) {
+        console.error('Error updating underperforming hashtag:', updateError)
+      }
+    }
+
+    console.log('Hashtags saved to database')
 
     return new Response(
-      JSON.stringify(analysis),
+      JSON.stringify({
+        ...analysis,
+        message: `Added ${analysis.suggested.length} trending hashtags to your analytics!`
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error: any) {

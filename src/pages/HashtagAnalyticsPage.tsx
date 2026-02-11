@@ -74,7 +74,11 @@ export default function HashtagAnalyticsPage() {
         throw new Error(errorMessage)
       }
 
+      // Invalidate queries to show new hashtags
+      await queryClient.invalidateQueries({ queryKey: ['hashtag-analytics'] })
+      
       toast.success(data.message || 'Hashtag analyzed successfully!')
+      setNewHashtag('') // Clear input after success
     } catch (error: any) {
       console.error('Hashtag analysis error:', error)
       toast.error(error.message || 'Failed to analyze hashtag')
@@ -91,7 +95,6 @@ export default function HashtagAnalyticsPage() {
 
     const formatted = newHashtag.startsWith('#') ? newHashtag : `#${newHashtag}`
     handleAnalyzeHashtag(formatted)
-    setNewHashtag('')
   }
 
   return (
