@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { ArrowLeft, Hash, TrendingUp, TrendingDown, Loader2, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,7 @@ import { FunctionsHttpError } from '@supabase/supabase-js'
 
 export default function HashtagAnalyticsPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [analyzingHashtag, setAnalyzingHashtag] = useState<string | null>(null)
   const [newHashtag, setNewHashtag] = useState('')
 
