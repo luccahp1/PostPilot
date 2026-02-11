@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Instagram, Link2, CheckCircle2, AlertCircle, Info, BookOpen } from 'lucide-react'
+import { Instagram, Link2, CheckCircle2, AlertCircle, Info, BookOpen, Sparkles } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
@@ -26,7 +26,7 @@ export default function InstagramConnection({ profile, onTogglePosting }: Instag
     ? new Date(profile.instagram_token_expires_at) < new Date()
     : false
 
-  // Check if backend has Facebook credentials configured on mount
+  // Check if backend has Meta App credentials configured on mount
   useEffect(() => {
     const checkConfig = async () => {
       try {
@@ -46,17 +46,17 @@ export default function InstagramConnection({ profile, onTogglePosting }: Instag
   const handleConnect = async () => {
     if (!appId) {
       toast.error(
-        'Instagram integration not configured. Facebook App credentials are missing.',
+        'Instagram integration not configured. Meta App credentials are missing.',
         { duration: 5000 }
       )
       return
     }
 
-    // Redirect to Facebook OAuth
+    // Redirect to Instagram OAuth (NEW: Direct Instagram Login!)
     const redirectUri = `${window.location.origin}/settings`
-    const scope = 'instagram_basic,instagram_content_publish,pages_read_engagement,business_management'
+    const scope = 'instagram_business_basic,instagram_business_content_publish,instagram_business_manage_messages,instagram_business_manage_comments'
     
-    const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?` +
+    const authUrl = `https://www.instagram.com/oauth/authorize?` +
       `client_id=${appId}&` +
       `redirect_uri=${encodeURIComponent(redirectUri)}&` +
       `scope=${scope}&` +
@@ -139,23 +139,23 @@ export default function InstagramConnection({ profile, onTogglePosting }: Instag
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-          <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-          <div className="text-sm text-blue-900 dark:text-blue-100 flex-1">
-            <p className="font-medium mb-2">Setup Requirements:</p>
-            <ul className="list-disc list-inside space-y-1 text-blue-800 dark:text-blue-200">
-              <li>Instagram Business or Creator account</li>
-              <li>Account connected to a Facebook Page</li>
-              <li>Link Instagram to Page in Instagram app settings</li>
+        <div className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+          <Sparkles className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+          <div className="text-sm text-green-900 dark:text-green-100 flex-1">
+            <p className="font-medium mb-2">✨ Simplified Setup (New in 2024!):</p>
+            <ul className="list-disc list-inside space-y-1 text-green-800 dark:text-green-200">
+              <li><strong className="line-through">No Facebook Page required</strong> ✓</li>
+              <li><strong className="line-through">No account linking needed</strong> ✓</li>
+              <li>Just need an Instagram Business/Creator account</li>
             </ul>
             {!appId && (
               <p className="mt-3 text-xs text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900 p-2 rounded">
-                <strong>⚠️ Configuration Required:</strong> Facebook App credentials are not configured. Please contact support.
+                <strong>⚠️ Configuration Required:</strong> Meta App credentials are not configured. Please contact support.
               </p>
             )}
-            <Link to="/instagram-setup-guide" className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline text-sm font-medium mt-3">
+            <Link to="/instagram-setup-guide" className="inline-flex items-center gap-1 text-green-600 dark:text-green-400 hover:underline text-sm font-medium mt-3">
               <BookOpen className="h-4 w-4" />
-              View Step-by-Step Setup Guide
+              View Quick Setup Guide (2 mins)
             </Link>
           </div>
         </div>

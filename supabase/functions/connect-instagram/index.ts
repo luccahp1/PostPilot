@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
         return new Response(
           JSON.stringify({ 
             configured: false,
-            error: 'Facebook App credentials not configured in backend' 
+            error: 'Meta App credentials not configured in backend' 
           }),
           { 
             status: 400,
@@ -60,72 +60,49 @@ Deno.serve(async (req) => {
     const appSecret = Deno.env.get('FACEBOOK_APP_SECRET')
 
     const tokenResponse = await fetch(
-      `https://graph.facebook.com/v18.0/oauth/access_token?` +
-      `client_id=${appId}&` +
-      `client_secret=${appSecret}&` +
-      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-      `code=${code}`
+      `https://graph.instagram.com/oauth/access_token`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id: appId!,
+          client_secret: appSecret!,
+          grant_type: 'authorization_code',
+          redirect_uri: redirectUri,
+          code: code
+        })
+      }
     )
 
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.json()
-      throw new Error(`Facebook: ${errorData.error?.message || 'Failed to get access token'}`)
+      throw new Error(`Instagram: ${errorData.error?.message || errorData.error_message || 'Failed to get access token'}`)
     }
 
-    const { access_token: shortLivedToken } = await tokenResponse.json()
+    const tokenData = await tokenResponse.json()
+    const shortLivedToken = tokenData.access_token
+    const instagramUserId = tokenData.user_id
+
+    console.log('Got short-lived token, exchanging for long-lived token...')
 
     // Exchange short-lived token for long-lived token (60 days)
     const longLivedResponse = await fetch(
-      `https://graph.facebook.com/v18.0/oauth/access_token?` +
-      `grant_type=fb_exchange_token&` +
-      `client_id=${appId}&` +
+      `https://graph.instagram.com/access_token?` +
+      `grant_type=ig_exchange_token&` +
       `client_secret=${appSecret}&` +
-      `fb_exchange_token=${shortLivedToken}`
+      `access_token=${shortLivedToken}`
     )
 
     if (!longLivedResponse.ok) {
       const errorData = await longLivedResponse.json()
-      throw new Error(`Facebook: ${errorData.error?.message || 'Failed to exchange token'}`)
+      throw new Error(`Instagram: ${errorData.error?.message || errorData.error_message || 'Failed to exchange token'}`)
     }
 
-    const { access_token: longLivedToken, expires_in } = await longLivedResponse.json()
+    const longLivedData = await longLivedResponse.json()
+    const longLivedToken = longLivedData.access_token
+    const expires_in = longLivedData.expires_in || 5184000 // 60 days default
 
-    // Get Instagram Business Account ID
-    const accountsResponse = await fetch(
-      `https://graph.facebook.com/v18.0/me/accounts?access_token=${longLivedToken}`
-    )
-
-    if (!accountsResponse.ok) {
-      const errorData = await accountsResponse.json()
-      throw new Error(`Facebook: ${errorData.error?.message || 'Failed to get pages'}`)
-    }
-
-    const accountsData = await accountsResponse.json()
-    
-    if (!accountsData.data || accountsData.data.length === 0) {
-      throw new Error('No Facebook pages found. Connect your Instagram Business Account to a Facebook Page first.')
-    }
-
-    // Get the first page's Instagram Business Account
-    const pageId = accountsData.data[0].id
-    const pageAccessToken = accountsData.data[0].access_token
-
-    const igResponse = await fetch(
-      `https://graph.facebook.com/v18.0/${pageId}?fields=instagram_business_account&access_token=${pageAccessToken}`
-    )
-
-    if (!igResponse.ok) {
-      const errorData = await igResponse.json()
-      throw new Error(`Facebook: ${errorData.error?.message || 'Failed to get Instagram account'}`)
-    }
-
-    const igData = await igResponse.json()
-
-    if (!igData.instagram_business_account) {
-      throw new Error('No Instagram Business Account linked to this Facebook Page. Link them in your Instagram app settings.')
-    }
-
-    const instagramUserId = igData.instagram_business_account.id
+    console.log('Successfully obtained long-lived token')
 
     // Calculate expiration date (long-lived tokens expire in 60 days)
     const expiresAt = new Date()
@@ -140,7 +117,7 @@ Deno.serve(async (req) => {
     const { error: updateError } = await supabaseAdmin
       .from('business_profiles')
       .update({
-        instagram_access_token: pageAccessToken,
+        instagram_access_token: longLivedToken,
         instagram_user_id: instagramUserId,
         instagram_token_expires_at: expiresAt.toISOString(),
       })
